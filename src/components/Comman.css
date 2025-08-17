@@ -1,0 +1,386 @@
+.today-lucuky-no{
+  border: solid 2px white !important;
+  
+  width: 100% !important;
+  border-radius: 20px;
+  border: 2px ;
+}
+
+.Gloden-Ank{
+    color: rgb(6, 6, 170) !important;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.Final-Ank{
+  color: rgb(6, 6, 170) !important;
+    font-size: 25px;
+    font-weight: bold;
+
+}
+.Heading-infosection{
+  font-weight: bold;
+  font-size: 20px;
+  font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
+.Gloden-Ank-Description{
+  color: rgb(0, 0, 41);
+  font-size: 30px;
+  font-weight: bold;
+  /* border: solid 1px white;
+  display: inline-block; */
+}
+
+.scroll-container {
+  height: 100px; /* Adjust height as needed */
+  overflow: hidden;
+  position: relative;
+}
+
+.scroll-content {
+  display: inline-block;
+  animation: scroll-up 10s linear infinite;
+}
+
+@keyframes scroll-up {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(-100%);
+  }
+}
+
+.content-name-city{
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.Live-Result-Heading{
+  font-size: 20px;
+  font-weight: bold;
+  background-color: #ff5733;
+  border: solid white 2px;
+  border-radius: 20px;
+}
+.Live-Result-section-main-container{
+  border: solid 1px red;
+}
+.Live-result-item-main-container{
+  border: solid 1px red;
+  padding: 10px;
+}
+
+.lucky-number-section-heading{
+  font: bold;
+  font-size: 24px;
+}
+
+.notice-continer-heading{
+  background-color: #ff5733;
+  margin: 5px;
+  color: white;
+  padding: 5px;
+  border: solid 1px white;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.matkadivisionparagraph{
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.LiveResultItemHeading{
+  font-weight: bold;
+  font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-style: italic;
+  font-size: 20px;
+  color: rgb(37, 4, 128);
+}
+
+.LiveResultItemHNumber{
+  font-weight: bold;
+  font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-style: italic;
+  font-size: 20px;
+  color: rgb(14, 121, 5);
+}
+
+.jodi-panel-container{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border: solid 1px white;
+  align-items: center;
+}
+
+.button-jodi-panel{
+  margin: 10px;
+  width: 100px;
+  height: 30px;
+}
+.timeStamp-for-jodi-panel{
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.jodi-panel-continer-second{
+  border: solid 1px red;
+  padding: 10px;
+}
+
+.dpboss-page {
+  background-color: #f4c392;
+  font-family: Arial, sans-serif;
+  padding: 10px;
+}
+
+.section {
+  border: 2px solid #d71b38;
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 6px;
+  background-color: #f4c392;
+}
+
+.section.red {
+  background-color: #d71b38;
+  color: white;
+}
+
+.section.red h2 {
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 10px;
+  font-weight: bold;
+  text-shadow: 1px 1px #333;
+}
+
+.section.red ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: #ffeaea;
+  line-height: 1.8;
+  text-align: center;
+  font-size: 15px;
+}
+
+.data-block h3 {
+  color: #d71b38;
+  text-align: center;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.data-block pre {
+  text-align: center;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  color: #000;
+  font-size: 15px;
+  
+}
+
+.AddGameModelMainContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.AddGameModelSeconContainer {
+  background: #fff;
+  padding: 30px; /* Increased padding */
+  border-radius: 8px;
+  min-width: 350px; /* Slightly wider modal */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.AddGameModelSeconContainer form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Adds space between each form group */
+}
+
+/* Styles for labels and inputs */
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: bold;
+  margin-bottom: 5px; /* Space between label and input */
+  color: #333;
+}
+
+.form-group input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
+}
+
+/* Styles for buttons */
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px; /* Space above the buttons */
+}
+
+.button-group button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.button-group button[type="submit"] {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.button-group button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+.button-group button[type="button"] {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.button-group button[type="button"]:hover {
+  background-color: #d8dbe0;
+}
+
+/* EditModal.css */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  min-width: 300px;
+}
+
+.modal-container h4 {
+  margin-bottom: 15px;
+}
+
+.modal-container input {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.modal-container button {
+  padding: 6px 12px;
+  margin-right: 5px;
+}
+.go-bottom {
+  background-color: #5ebdfc;
+  border: none;
+  padding: 10px 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.matka-table {
+  border-collapse: collapse;
+  margin: auto;
+  background-color: #f4b183;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+.matka-table th,
+.matka-table td {
+  border: 1px solid #000;
+  padding: 8px;
+}
+
+.matka-table .title {
+  background-color: #003399;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.matka-table .day {
+  background-color: gold;
+  font-weight: bold;
+}
+
+.red {
+  color: red;
+  font-weight: bold;
+}
+
+.matka-table .cell {
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  text-align: center;
+}
+
+.data-of-jodi-open-close{
+  display: flex;
+  justify-content: space-between;
+}
+
+.matka-table .small {
+  font-size: 20px;
+  display: flex;
+  flex-direction: column;
+  font-weight:100;
+  justify-content: center;
+  align-items: center;
+  line-height: 14px;
+}
+
+.matka-table .big {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.matka-table .red {
+  color: red;
+}
