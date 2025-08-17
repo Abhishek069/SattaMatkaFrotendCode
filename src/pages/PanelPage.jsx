@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import PanelMatkaTable from "../components/PanelMatkaTable";
 import { useParams } from "react-router-dom";
+import {api} from '../lib/api'
 
 const PanelPage = () => {
   // Initialize with an empty object to prevent errors when trying to access properties
@@ -13,11 +14,12 @@ const PanelPage = () => {
 
   const fetchSingleGameData = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/AllGames/${id}`);
-      if (!res.ok) {
-        throw new Error("Network response was not ok");
-      }
-      const data = await res.json();
+      // const res = await fetch(`http://localhost:5000/AllGames/${id}`);
+      // if (!res.ok) {
+      //   throw new Error("Network response was not ok");
+      // }
+      // const data = await res.json();
+      const data = await api(`/AllGames/${id}`);
       if (data.success) {
         setSingleGameData(data.data);
         console.log(data.data);

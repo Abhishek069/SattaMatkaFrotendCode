@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import MatkaTable from "../components/JodiMatkaTable";
 import { useParams } from "react-router-dom";
+import {api} from '../lib/api';
 
 const JodiPanPage = () => {
   // Initialize with an empty object to prevent errors when trying to access properties
@@ -13,14 +14,9 @@ const JodiPanPage = () => {
 
   const fetchSingleGameData = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/AllGames/${id}`);
-      if (!res.ok) {
-        throw new Error("Network response was not ok");
-      }
-      const data = await res.json();
+      const data = await api(`/AllGames/${id}`);
       if (data.success) {
         setSingleGameData(data.data);
-        console.log(data.data);
       } else {
         setError("Failed to fetch game data.");
       }
