@@ -1,76 +1,6 @@
-// // src/components/LiveResultSection.jsx
-// import React, { useEffect, useState } from "react";
-// import LiveResultItem from "./LiveResultItem";
-
-// const LiveResultSection = () => {
-//   const [results, setResults] = useState([]);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     const fetchResults = async () => {
-//       try {
-//         const res = await fetch("http://localhost:5000/AllGames/latest-updates");
-//         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        
-//         const data = await res.json();
-
-//         // Transform to only keep last resultNo entry
-//         const formatted = data.map(game => {
-//           const lastResult = game.resultNo?.[game.resultNo.length - 1] || [];
-//           return {
-//             title: game.name,
-//             numbers: lastResult.slice(0, 3).join("-") // join first 3 parts like "765-09-987"
-//           };
-//         });
-
-//         setResults(formatted);
-//       } catch (error) {
-//         console.error("Error fetching live results:", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchResults();
-//   }, []);
-
-//   if (loading) {
-//     return (
-//       <div className="bg-warning border border-white m-1 p-3 Live-Result-section-main-container">
-//         <div className="bg-pink text-white text-center py-2 mb-4 fw-bold Live-Result-Heading">
-//           <h2>💥LIVE RESULT💥</h2>
-//         </div>
-//         <p className="text-center">Loading results...</p>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="bg-warning border border-white m-1 p-3 Live-Result-section-main-container">
-//       <div className="bg-pink text-white text-center py-2 mb-4 fw-bold Live-Result-Heading">
-//         <h2>💥LIVE RESULT💥</h2>
-//       </div>
-//       <div className="row">
-//         {results.length > 0 ? (
-//           results.map((item, idx) => (
-//             <div className="col-md-4" key={idx}>
-//               <LiveResultItem title={item.title} numbers={item.numbers} />
-//             </div>
-//           ))
-//         ) : (
-//           <p className="text-center">No live results found.</p>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default LiveResultSection;
-
-
-// src/components/LiveResultSection.jsx
 import React, { useEffect, useState } from "react";
 import LiveResultItem from "./LiveResultItem";
+import {api} from '../lib/api'
 
 const LiveResultSection = () => {
   const [results, setResults] = useState([]);
@@ -79,11 +9,7 @@ const LiveResultSection = () => {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const res = await fetch("http://localhost:5000/AllGames/latest-updates");
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        
-        const data = await res.json();
-
+        const data = await api("/AllGames/latest-updates");
         // Transform to only keep last resultNo entry
         const formatted = data.map(game => {
           const lastResult = game.resultNo?.[game.resultNo.length - 1];
