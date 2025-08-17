@@ -2,9 +2,10 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ Import navigate
+import {api} from '../lib/api';
 
 const LoginPage = () => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({ mobile: "", password: "" });
   const [error, setError] = useState("");
   const navigate = useNavigate(); // ✅ Hook to navigate
 
@@ -13,21 +14,31 @@ const LoginPage = () => {
     setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
-    const { email, password } = formData;
+    const { mobile, password } = formData;
 
-    if (!email || !password) {
+    const data = await api("/user/authorize", {
+            method: "POST",
+            body: JSON.stringify({ mobile, password}),
+          });
+    
+    localStorage.setItem("authToken", data.token);
+    localStorage.setItem("userRole", data.role);
+
+    if (!mobile || !password) {
       setError("Both fields are required.");
       return;
     }
-    // ✅ Dummy login logic
-    if (email === "admin@example.com" && password === "1234") {
-      // alert("Login successful!");
-      navigate("/"); // ✅ Redirect to HomePage
-    } else {
-      setError("Invalid email or password.");
+    if (data.success){
+        navigate("/"); // ✅ Redirect to HomePage
     }
+    // ✅ Dummy login logic
+    // if (email === "admin@example.com" && password === "1234") {
+    //   // alert("Login successful!");
+    // } else {
+    //   setError("Invalid email or password.");
+    // }
   };
 
   return (
@@ -51,16 +62,16 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
               <label htmlFor="email" className="form-label fw-medium">
-                Email address
+                Mobile No
               </label>
               <input
-                type="email"
+                type="text"
                 className="form-control"
-                id="email"
-                name="email"
-                value={formData.email}
+                id="mobile"
+                name="mobile"
+                value={formData.mobile}
                 onChange={handleChange}
-                placeholder="name@example.com"
+                placeholder="Mobile No"
               />
             </div>
 
@@ -88,9 +99,10 @@ const LoginPage = () => {
 
           <p className="text-center text-muted mt-4">
             Don’t have an account?{" "}
-            <a href="#" className="text-primary">
+            Please connect to the below email or no xxxxx@xxx.com 3453334455
+            {/* <a href="#" className="text-primary">
               Sign up
-            </a>
+            </a> */}
           </p>
         </div>
       </div>

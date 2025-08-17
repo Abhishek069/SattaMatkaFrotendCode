@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 
 export default function JodiPannelResultSection() {
+  const role = localStorage.getItem("userRole");
+  console.log(role);
+
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -186,6 +189,8 @@ export default function JodiPannelResultSection() {
             setModalType("add");
             setShowModal(true);
           }}
+          // disabled={role !== 'Admin'}
+          hidden={role !== "Admin"}
         >
           ADD GAME
         </button>
@@ -195,6 +200,7 @@ export default function JodiPannelResultSection() {
             setModalType("agent");
             setShowModal(true);
           }}
+          hidden={role !== "Admin"}
         >
           ADD AGENT
         </button>
@@ -204,6 +210,7 @@ export default function JodiPannelResultSection() {
             setModalType("delete");
             setShowModal(true);
           }}
+          hidden={role !== "Admin"}
         >
           DELETE
         </button>
@@ -236,6 +243,7 @@ export default function JodiPannelResultSection() {
             <button
               className="btn btn-primary"
               onClick={() => handleEditClick(item)}
+              hidden={role !== "Admin" && role !== "Agent"}
             >
               EDIT
             </button>
@@ -372,7 +380,18 @@ export default function JodiPannelResultSection() {
                       type="text"
                       name="mobile"
                       value={newAgent.mobile}
-                      onChange={handleAgentChange}
+                      onChange={(e) => {
+                        // Allow only digits and max 10 characters
+                        const value = e.target.value.replace(/\D/g, "");
+                        if (value.length <= 10) {
+                          handleAgentChange({
+                            target: { name: "mobile", value },
+                          });
+                        }
+                      }}
+                      maxLength="10"
+                      pattern="\d{10}"
+                      title="Enter a valid 10-digit mobile number"
                       required
                     />
                   </div>
