@@ -18,7 +18,7 @@ const DpBossPage = () => {
 
       <div className="section data-block">
         <h3>
-          DpBoss Net Weekly Patti Or Penal Chart From 04-08-2025 To 10-08-2025
+          Satta Matka Aajj Tak Net Weekly Patti Or Penal Chart From 04-08-2025 To 10-08-2025
           For Kalyan, Milan, Kalyan Night, Rajdhani, Time, Main Bazar, Mumbai
           Royal Night
         </h3>
@@ -32,7 +32,7 @@ const DpBossPage = () => {
 
       <div className="section data-block">
         <h3>
-          DpBoss Net Weekly Line Open Or Close From 04-08-2025 To 10-08-2025 For
+          Satta Matka Aajj Tak Net Weekly Line Open Or Close From 04-08-2025 To 10-08-2025 For
           Kalyan, Milan, Kalyan Night, Rajdhani, Time, Main Bazar, Mumbai Royal
           Night
         </h3>
@@ -44,7 +44,7 @@ const DpBossPage = () => {
 
       <div className="section data-block">
         <h3>
-          DpBoss Net Weekly Jodi Chart From 04-08-2025 To 10-08-2025 For Kalyan
+          Satta Matka Aajj Tak Net Weekly Jodi Chart From 04-08-2025 To 10-08-2025 For Kalyan
           Milan Kalyan Night, Rajdhani Time, Main Bazar, Mumbai Royal Night
           Market
         </h3>

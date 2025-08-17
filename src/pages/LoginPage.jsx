@@ -24,7 +24,7 @@ const LoginPage = () => {
     // ✅ Dummy login logic
     if (email === "admin@example.com" && password === "1234") {
       // alert("Login successful!");
-      navigate("/home"); // ✅ Redirect to HomePage
+      navigate("/"); // ✅ Redirect to HomePage
     } else {
       setError("Invalid email or password.");
     }

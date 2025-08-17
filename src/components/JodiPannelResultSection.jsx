@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
 
-export default function JodiPannelResultSection({ setGameTitle }) {
+export default function JodiPannelResultSection() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,7 +15,7 @@ export default function JodiPannelResultSection({ setGameTitle }) {
     owner: "",
     resultNo: "",
     startTime: "",
-    endTime: "", // Added day to the newGame state
+    endTime: "",
   });
 
   const [deleteGameName, setDeleteGameName] = useState("");
@@ -22,14 +23,20 @@ export default function JodiPannelResultSection({ setGameTitle }) {
   const [editGame, setEditGame] = useState({ id: "", resultNo: "", day: "" });
   const [showEditModal, setShowEditModal] = useState(false);
 
+  // -------- New Agent States ----------
+  const [newAgent, setNewAgent] = useState({
+    name: "",
+    mobile: "",
+    role: "",
+    password: "",
+    address: "",
+  });
+
   const navigate = useNavigate();
 
   const fetchGamesAgain = async () => {
     try {
-      const res = await fetch("http://localhost:5000/AllGames/");
-      if (!res.ok) throw new Error("Network response was not ok");
-
-      const data = await res.json();
+      const data = await api("/AllGames/");
       if (data.success) {
         setGames(data.data);
       } else {
@@ -55,28 +62,18 @@ export default function JodiPannelResultSection({ setGameTitle }) {
 
   const handleAddGame = async (e) => {
     e.preventDefault();
-
     const resultNoArray = newGame.resultNo
       .split("-")
       .map((num) => num.trim())
       .filter((num) => num !== "");
 
-    // Push the day into the same array
     resultNoArray.push(newGame.day);
 
     try {
-      const res = await fetch("http://localhost:5000/AllGames/addGame", {
+      await api("/AllGames/addGame", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newGame,
-          resultNo: resultNoArray, // Sending a single array
-        }),
+        body: JSON.stringify({ ...newGame, resultNo: resultNoArray }),
       });
-
-      if (!res.ok) throw new Error("Failed to add game");
-
-      await res.json();
       fetchGamesAgain();
       setShowModal(false);
       setNewGame({
@@ -86,6 +83,7 @@ export default function JodiPannelResultSection({ setGameTitle }) {
         startTime: "",
         endTime: "",
       });
+      alert("Game Added successfully!");
     } catch (err) {
       console.error("Error adding game:", err);
     }
@@ -94,16 +92,11 @@ export default function JodiPannelResultSection({ setGameTitle }) {
   const handleDeleteGame = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(
-        `http://localhost:5000/AllGames/deleteGame/${deleteGameName}`,
-        { method: "DELETE" }
-      );
-      if (!res.ok) throw new Error("Failed to delete game");
-
-      await res.json();
+      await api(`/AllGames/deleteGame/${deleteGameName}`, { method: "DELETE" });
       fetchGamesAgain();
       setShowModal(false);
       setDeleteGameName("");
+      alert("Game Deleted successfully!");
     } catch (err) {
       console.error("Error deleting game:", err);
     }
@@ -118,7 +111,6 @@ export default function JodiPannelResultSection({ setGameTitle }) {
     setShowEditModal(true);
   };
 
-  console.log(games)
   const handleUpdateGame = async (e) => {
     e.preventDefault();
 
@@ -128,27 +120,19 @@ export default function JodiPannelResultSection({ setGameTitle }) {
       .map((num) => num.trim())
       .filter((num) => num !== "");
 
-    // Push the selected day to the same array
     if (editGame.day) {
       newResultArray.push(editGame.day);
     }
 
     try {
-      // The PUT request now just sends the new result array to be pushed.
-      // This is a much cleaner way to handle the update on the backend.
-      const updateRes = await fetch(
-        `http://localhost:5000/AllGames/updateGame/${gameId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resultNo: newResultArray }),
-        }
-      );
-
-      const updateData = await updateRes.json();
+      const updateData = await api(`/AllGames/updateGame/${gameId}`, {
+        method: "PUT",
+        body: JSON.stringify({ resultNo: newResultArray }),
+      });
       if (updateData.success) {
-        fetchGamesAgain(); // Fetch all games to get the latest data
+        fetchGamesAgain();
         setShowEditModal(false);
+        alert("Game Number update successfully!");
       } else {
         alert("Failed to update game: " + updateData.message);
       }
@@ -158,17 +142,39 @@ export default function JodiPannelResultSection({ setGameTitle }) {
     }
   };
 
-  const handlePageChange = (game,value) => {
-    console.log(game,value);
-    if(value!=="panel"){
+  const handlePageChange = (game, value) => {
+    if (value !== "panel") {
       navigate(`/JodiPanPage/${game._id}`);
-    }
-    else{
-      navigate(`/PanelPage/${game._id}`); 
+    } else {
+      navigate(`/PanelPage/${game._id}`);
     }
   };
 
-  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  // Handle agent form change
+  const handleAgentChange = (e) => {
+    setNewAgent({ ...newAgent, [e.target.name]: e.target.value });
+  };
+
+  // Submit agent form
+  const handleAddAgent = async (e) => {
+    e.preventDefault();
+    try {
+      await api("/user/addUser", {
+        method: "POST",
+        body: JSON.stringify(newAgent),
+      });
+      alert("Agent added successfully!");
+      setShowModal(false);
+      setNewAgent({
+        name: "",
+        mobile: "",
+        role: "",
+        address: "",
+      });
+    } catch (err) {
+      console.error("Error adding agent:", err);
+    }
+  };
 
   return (
     <div className="bg-warning border border-white m-1 p-3">
@@ -186,7 +192,7 @@ export default function JodiPannelResultSection({ setGameTitle }) {
         <button
           className="m-1 btn btn-lg btn-success"
           onClick={() => {
-            setModalType("add");
+            setModalType("agent");
             setShowModal(true);
           }}
         >
@@ -222,7 +228,7 @@ export default function JodiPannelResultSection({ setGameTitle }) {
               item.resultNo.length > 0
                 ? Array.isArray(item.resultNo[item.resultNo.length - 1])
                   ? item.resultNo[item.resultNo.length - 1]
-                      .filter((val) => !isNaN(val)) // remove non-numeric entries
+                      .filter((val) => !isNaN(val))
                       .join("-")
                   : item.resultNo[item.resultNo.length - 1]
                 : "No numbers"}
@@ -238,13 +244,16 @@ export default function JodiPannelResultSection({ setGameTitle }) {
               <p>{item.endTime}</p>
             </div>
           </div>
-          <button onClick={() => handlePageChange(item,"panel")} className="btn btn-sm btn-primary button-jodi-panel">
+          <button
+            onClick={() => handlePageChange(item, "panel")}
+            className="btn btn-sm btn-primary button-jodi-panel"
+          >
             Panel
           </button>
         </div>
       ))}
 
-      {/* Add/Delete Modal */}
+      {/* Add/Delete/Agent Modal */}
       {showModal && (
         <div className="AddGameModelMainContainer">
           <div className="AddGameModelSeconContainer">
@@ -305,21 +314,6 @@ export default function JodiPannelResultSection({ setGameTitle }) {
                       required
                     />
                   </div>
-                  {/* <div className="form-group">
-                    <label htmlFor="day">Day</label>
-                    <select
-                      id="day"
-                      name="day"
-                      value={newGame.day}
-                      onChange={handleFormChange}
-                      required
-                    >
-                      <option value="">Select a day</option>
-                      {daysOfWeek.map(day => (
-                        <option key={day} value={day}>{day}</option>
-                      ))}
-                    </select>
-                  </div> */}
                   <div className="button-group">
                     <button type="submit">Save</button>
                     <button type="button" onClick={() => setShowModal(false)}>
@@ -328,7 +322,7 @@ export default function JodiPannelResultSection({ setGameTitle }) {
                   </div>
                 </form>
               </>
-            ) : (
+            ) : modalType === "delete" ? (
               <>
                 <h4>Delete Game</h4>
                 <form onSubmit={handleDeleteGame}>
@@ -345,6 +339,78 @@ export default function JodiPannelResultSection({ setGameTitle }) {
                   <div className="button-group">
                     <button type="submit" className="btn btn-danger">
                       Delete
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setShowModal(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <>
+                <h4>Add New Agent</h4>
+                <form onSubmit={handleAddAgent}>
+                  <div className="form-group">
+                    <label htmlFor="username">User Name</label>
+                    <input
+                      id="username"
+                      type="text"
+                      name="name"
+                      value={newAgent.name}
+                      onChange={handleAgentChange}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="mobile">Mobile No</label>
+                    <input
+                      id="mobile"
+                      type="text"
+                      name="mobile"
+                      value={newAgent.mobile}
+                      onChange={handleAgentChange}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="role">Role</label>
+                    <input
+                      id="role"
+                      type="text"
+                      name="role"
+                      value={newAgent.role}
+                      onChange={handleAgentChange}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="role">Password</label>
+                    <input
+                      id="password"
+                      type="password"
+                      name="password"
+                      value={newAgent.password}
+                      onChange={handleAgentChange}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="address">Address</label>
+                    <textarea
+                      id="address"
+                      name="address"
+                      value={newAgent.address}
+                      onChange={handleAgentChange}
+                      required
+                    />
+                  </div>
+                  <div className="button-group">
+                    <button type="submit" className="btn btn-success">
+                      Save
                     </button>
                     <button
                       type="button"
