@@ -15,6 +15,7 @@ import DpBossPage from '../components/DpBossPage'
 const HomePage = (props) => {
 
   const {setGameTitle} = props
+  
 
   return (
     <div className="bg-danger border m-1 border-danger text-center py-2">
