@@ -1,7 +1,13 @@
 import React from "react";
 import "./Comman.css";
+import { useNavigate } from "react-router-dom";
 
 const DpBossPage = () => {
+  const navigate = useNavigate()
+
+  const handleLogin = ()=>{
+    navigate('/login')
+  }
   return (
     <div className="dpboss-page">
       <div className="section red">
@@ -50,6 +56,7 @@ const DpBossPage = () => {
         </h3>
         <pre>01 45 89 66 10 11 95 60 44 75 68 85 27 72 27 32 37 36 81 86</pre>
       </div>
+        {/* <button className="btn btn-primary" onClick={handleLogin}>Login</button> */}
     </div>
   );
 };
