@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 
 export default function JodiPannelResultSection() {
+  const token = localStorage.getItem("authToken");
+  // console.log(token);
+  
   const role = localStorage.getItem("userRole");
-  console.log(role);
+  // console.log(role);
 
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,6 +16,19 @@ export default function JodiPannelResultSection() {
 
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("add");
+  let username = null;
+
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      // console.log(decoded);
+      username = decoded.username; // adjust this key to match your backend payload
+    } catch (err) {
+      console.error("Invalid token", err);
+    }
+  }
+
+  // console.log(username);
 
   const [newGame, setNewGame] = useState({
     name: "",
@@ -214,6 +231,16 @@ export default function JodiPannelResultSection() {
         >
           DELETE
         </button>
+        <button
+          className="m-1 btn btn-lg btn-danger"
+          onClick={() => {
+            setModalType("delete");
+            setShowModal(true);
+          }}
+          hidden={role !== "Admin"}
+        >
+          Add Throw API
+        </button>
       </div>
 
       {games.map((item, index) => (
@@ -243,7 +270,12 @@ export default function JodiPannelResultSection() {
             <button
               className="btn btn-primary"
               onClick={() => handleEditClick(item)}
-              hidden={role !== "Admin" && role !== "Agent"}
+              hidden={
+                !(
+                  role === "Admin" ||
+                  (role === "Agent" && item.owner === username)
+                )
+              }
             >
               EDIT
             </button>
