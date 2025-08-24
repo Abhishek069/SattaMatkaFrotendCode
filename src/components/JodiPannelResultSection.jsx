@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 
 export default function JodiPannelResultSection() {
-  const role = localStorage.getItem("userRole");
-  console.log(role);
+  const token = localStorage.getItem("authToken");
+  // const role = localStorage.getItem("userRole");
+
+  const CurrentTime = Date();
 
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,6 +15,18 @@ export default function JodiPannelResultSection() {
 
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("add");
+  let username = null;
+  let role = null;
+
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      role = decoded.role;
+      username = decoded.username; // adjust this key to match your backend payload
+    } catch (err) {
+      console.error("Invalid token", err);
+    }
+  }
 
   const [newGame, setNewGame] = useState({
     name: "",
@@ -23,7 +38,13 @@ export default function JodiPannelResultSection() {
 
   const [deleteGameName, setDeleteGameName] = useState("");
 
-  const [editGame, setEditGame] = useState({ id: "", resultNo: "", day: "" });
+  const [editGame, setEditGame] = useState({
+    id: "",
+    resultNo: "",
+    openOrClose: "",
+    day: "",
+    date: "",
+  });
   const [showEditModal, setShowEditModal] = useState(false);
 
   // -------- New Agent States ----------
@@ -106,26 +127,55 @@ export default function JodiPannelResultSection() {
   };
 
   const handleEditClick = (game) => {
+    const today_date = new Date();
+    const dayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
+
     setEditGame({
       id: game._id,
       resultNo: "",
-      day: "",
+      openOrClose: "", // ✅ consistent casing
+      day: dayName,
+      date: today_date, // ✅ store as "day"
     });
     setShowEditModal(true);
   };
+
+  const getDisplayResult = (item) => {
+    console.log()
+  const lastOpen = item.openNo?.[item.openNo.length - 1] || [];
+  const lastClose = item.closeNo?.[item.closeNo.length - 1] || [];
+
+  const openMain = lastOpen[0] || "";
+  const openDigit = lastOpen[1] || "";
+  const closeDigit = lastClose[1] || "";
+  const closeMain = lastClose[0] || "";
+
+  // Format: openMain-openDigit+closeDigit-closeMain
+  return `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
+};
 
   const handleUpdateGame = async (e) => {
     e.preventDefault();
 
     const gameId = editGame.id;
-    const newResultArray = editGame.resultNo
+
+    // split resultNo safely
+    const newResultArray = (editGame.resultNo || "")
       .split("-")
       .map((num) => num.trim())
       .filter((num) => num !== "");
 
-    if (editGame.day) {
+    console.log("You called me!");
+    console.log(editGame);
+    console.log(editGame.OpenOrclose);
+
+    if (editGame.OpenOrclose) {
+      newResultArray.push(editGame.date);
+      newResultArray.push(editGame.OpenOrclose);
       newResultArray.push(editGame.day);
     }
+
+    console.log("Final Result Array:", newResultArray);
 
     try {
       const updateData = await api(`/AllGames/updateGame/${gameId}`, {
@@ -214,52 +264,108 @@ export default function JodiPannelResultSection() {
         >
           DELETE
         </button>
+        <button
+          className="m-1 btn btn-lg btn-danger"
+          onClick={() => {
+            setModalType("delete");
+            setShowModal(true);
+          }}
+          hidden={role !== "Admin"}
+        >
+          Add Throw API
+        </button>
       </div>
 
-      {games.map((item, index) => (
-        <div
-          className="jodi-panel-container jodi-panel-container-second"
-          key={item._id || index}
-        >
-          <button
-            className="btn btn-sm btn-primary button-jodi-panel"
-            onClick={() => handlePageChange(item)}
+      {games.map((item, index) => {
+        const now = new Date();
+
+        const parseTime = (timeStr) => {
+          if (!timeStr) return null;
+          const [time, modifier] = timeStr.split(" ");
+          let [hours, minutes] = time.split(":").map(Number);
+
+          if (modifier === "PM" && hours < 12) hours += 12;
+          if (modifier === "AM" && hours === 12) hours = 0;
+
+          const date = new Date();
+          date.setHours(hours, minutes, 0, 0);
+          return date;
+        };
+
+        const start = parseTime(item.startTime);
+        // console.log(start,item.name);
+
+        let displayResult = "No numbers";
+
+        if (start) {
+          const diffInMs = start - now; // positive if start is in the future
+          const diffInMinutes = diffInMs / (1000 * 60);
+          // console.log("diff");
+
+          // console.log(diffInMinutes, item.name);
+
+          if (diffInMinutes <= 5 && diffInMinutes >= 0) {
+            // If start time is 5 min or less away
+            // console.log("loadding...");
+
+            displayResult = "Loading...";
+          } else if (
+            item.resultNo &&
+            Array.isArray(item.resultNo) &&
+            item.resultNo.length > 0
+          ) {
+            displayResult = Array.isArray(
+              item.openNo[item.openNo.length -1]
+              // item.resultNo[item.resultNo.length - 1]
+            )
+              // ? item.resultNo[item.resultNo.length - 1]
+              //     .filter((val) => !isNaN(val))
+              //     .join("-")
+              ? <p>{getDisplayResult(item)}</p>
+              : item.resultNo[item.resultNo.length - 1];
+          }
+        }
+
+        return (
+          <div
+            className="jodi-panel-container jodi-panel-container-second"
+            key={item._id || index}
           >
-            Jodi
-          </button>
-          <div>
-            <h4>{item.name}</h4>
-            <h5>
-              {item.resultNo &&
-              Array.isArray(item.resultNo) &&
-              item.resultNo.length > 0
-                ? Array.isArray(item.resultNo[item.resultNo.length - 1])
-                  ? item.resultNo[item.resultNo.length - 1]
-                      .filter((val) => !isNaN(val))
-                      .join("-")
-                  : item.resultNo[item.resultNo.length - 1]
-                : "No numbers"}
-            </h5>
             <button
-              className="btn btn-primary"
-              onClick={() => handleEditClick(item)}
-              hidden={role !== "Admin" && role !== "Agent"}
+              className="btn btn-sm btn-primary button-jodi-panel"
+              onClick={() => handlePageChange(item)}
             >
-              EDIT
+              Jodi
             </button>
-            <div className="timeStamp-for-jodi-panel">
-              <p>{item.startTime}</p>
-              <p>{item.endTime}</p>
+            <div>
+              <h4>{item.name}</h4>
+              <h5>{displayResult}</h5>
+              <button
+                className="btn btn-primary"
+                onClick={() => handleEditClick(item)}
+                hidden={
+                  !(
+                    role === "Admin" ||
+                    (role === "Agent" && item.owner === username)
+                  )
+                }
+              >
+                EDIT
+              </button>
+              <div className="timeStamp-for-jodi-panel">
+                <p>{item.startTime}</p>
+                <p>{item.endTime}</p>
+              </div>
             </div>
+            <button
+              onClick={() => handlePageChange(item, "panel")}
+              className="btn btn-sm btn-primary button-jodi-panel"
+            >
+              Panel
+            </button>
           </div>
-          <button
-            onClick={() => handlePageChange(item, "panel")}
-            className="btn btn-sm btn-primary button-jodi-panel"
-          >
-            Panel
-          </button>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Add/Delete/Agent Modal */}
       {showModal && (
@@ -453,38 +559,38 @@ export default function JodiPannelResultSection() {
             <h4>Add Result Number</h4>
             <form onSubmit={handleUpdateGame}>
               <div className="form-group">
-                <label htmlFor="resultNo">Result No</label>
-                <input
-                  id="resultNo"
-                  type="text"
-                  placeholder="e.g. 111-33-555"
-                  value={editGame.resultNo}
-                  onChange={(e) =>
-                    setEditGame({ ...editGame, resultNo: e.target.value })
-                  }
-                  required
-                />
-              </div>
-              <div className="form-group">
                 <label htmlFor="day">Day</label>
                 <select
                   id="day"
-                  value={editGame.day}
+                  value={editGame.OpenOrclose}
                   onChange={(e) =>
-                    setEditGame({ ...editGame, day: e.target.value })
+                    setEditGame({ ...editGame, OpenOrclose: e.target.value })
                   }
                   required
                 >
-                  <option value="">Select a day</option>
-                  <option value="Monday">Monday</option>
-                  <option value="Tuesday">Tuesday</option>
-                  <option value="Wednesday">Wednesday</option>
-                  <option value="Thursday">Thursday</option>
-                  <option value="Friday">Friday</option>
-                  <option value="Saturday">Saturday</option>
-                  <option value="Sunday">Sunday</option>
+                  <option value="">Select Open Close</option>
+                  <option value="Open">Open</option>
+                  <option value="Close">Close</option>
                 </select>
               </div>
+
+              {/* Show input only if Open or Close is selected */}
+              {editGame.OpenOrclose && (
+                <div className="form-group">
+                  <label htmlFor="resultNo">Result No</label>
+                  <input
+                    id="resultNo"
+                    type="text"
+                    placeholder="e.g. 111-3"
+                    value={editGame.resultNo}
+                    onChange={(e) =>
+                      setEditGame({ ...editGame, resultNo: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+              )}
+
               <div className="button-group">
                 <button type="submit" className="btn btn-success">
                   Save

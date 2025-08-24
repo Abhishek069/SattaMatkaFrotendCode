@@ -1,10 +1,96 @@
+// import React from "react";
+// import "./Comman.css";
+
+// export default function MatkaTable({ groupedData, groupedDataOpen }) {
+//   console.log("Grouped Data Jodi:", groupedData);
+//   console.log("Grouped Data Open:", groupedDataOpen);
+
+//   const headers = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+//   const dayMap = {
+//     Monday: "Mon",
+//     Tuesday: "Tue",
+//     Wednesday: "Wed",
+//     Thursday: "Thu",
+//     Friday: "Fri",
+//     Saturday: "Sat",
+//     Sunday: "Sun",
+//   };
+
+//   // 🔹 Helper to generate table rows from groupedData
+//   const generateTableData = (dataSource) => {
+//     const maxRows = Math.max(
+//       ...Object.values(dataSource).map((dayArr) => dayArr.length)
+//     );
+
+//     return Array.from({ length: maxRows }, (_, rowIndex) =>
+//       headers.map((shortDay) => {
+//         const fullDay = Object.keys(dayMap).find(
+//           (key) => dayMap[key] === shortDay
+//         );
+//         const dayData = dataSource[fullDay];
+//         return dayData && dayData[rowIndex]
+//           ? dayData[rowIndex][1] // only 2nd value
+//           : "";
+//       })
+//     );
+//   };
+
+//   const jodiData = generateTableData(groupedData);
+//   const openData = generateTableData(groupedDataOpen);
+
+//   const redNumbers = ["44", "50", "38", "99", "61", "05", "77", "88", "66"];
+
+//   // 🔹 Reusable Table Component
+//   const renderTable = (title, tableData) => (
+//     <table className="matka-table">
+//       <thead>
+//         <tr>
+//           <th colSpan={7} className="title">{title}</th>
+//         </tr>
+//         <tr>
+//           {headers.map((day) => (
+//             <th key={day} className="day">{day}</th>
+//           ))}
+//         </tr>
+//       </thead>
+//       <tbody>
+//         {tableData.map((row, rowIndex) => (
+//           <tr key={rowIndex}>
+//             {row.map((cell, colIndex) => (
+//               <td
+//                 key={colIndex}
+//                 className={redNumbers.includes(cell.toString()) ? "red" : ""}
+//               >
+//                 {cell}
+//               </td>
+//             ))}
+//           </tr>
+//         ))}
+//       </tbody>
+//     </table>
+//   );
+
+//   return (
+//     <div>
+//       <button className="go-bottom">Go to Bottom</button>
+
+//       {/* 🔹 Jodi Table */}
+//       {renderTable("MILAN MORNING MATKA JODI RECORD 2019 - 2025", jodiData)}
+
+//       {/* 🔹 Open Table */}
+//       {renderTable("MILAN MORNING MATKA OPEN RECORD 2019 - 2025", openData)}
+//     </div>
+//   );
+// }
+
 import React from "react";
 import "./Comman.css";
 
-export default function MatkaTable({groupedData,lastIndexFortheResult}) {
-  
-  console.log(lastIndexFortheResult)
-  
+export default function MatkaTable({ groupedData, groupedDataOpen,titleNameHeading }) {
+  console.log("Grouped Data Jodi:", groupedData);
+  console.log("Grouped Data Open:", groupedDataOpen);
+
   const headers = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   const dayMap = {
@@ -17,39 +103,55 @@ export default function MatkaTable({groupedData,lastIndexFortheResult}) {
     Sunday: "Sun",
   };
 
-  const maxRows = Math.max(
-    ...Object.values(groupedData).map((dayArr) => dayArr.length)
+  // 🔹 Helper to generate table rows from combined sources
+  const generateCombinedTableData = (jodiSource, openSource) => {
+    const maxRows = Math.max(
+      ...Object.values(jodiSource).map((dayArr) => dayArr.length),
+      ...Object.values(openSource).map((dayArr) => dayArr.length)
+    );
+
+    return Array.from({ length: maxRows }, (_, rowIndex) =>
+      headers.map((shortDay) => {
+        const fullDay = Object.keys(dayMap).find(
+          (key) => dayMap[key] === shortDay
+        );
+
+        const jodiDayData = jodiSource[fullDay];
+        const openDayData = openSource[fullDay];
+
+        const jodiVal =
+          jodiDayData && jodiDayData[rowIndex]
+            ? jodiDayData[rowIndex][1]
+            : "";
+        const openVal =
+          openDayData && openDayData[rowIndex]
+            ? openDayData[rowIndex][1]
+            : "";
+
+        // Combine both values into single cell
+        if (jodiVal && openVal) return `${openVal}${jodiVal}`;
+        return jodiVal || openVal || "";
+      })
+    );
+  };
+
+  const combinedData = generateCombinedTableData(
+    groupedData,
+    groupedDataOpen
   );
-
-  console.log(maxRows)
-  // Create rows: each row contains the 2nd value from each day's array
-  const data = Array.from({ length: maxRows }, (_, rowIndex) =>
-    headers.map((shortDay) => {
-      const fullDay = Object.keys(dayMap).find(
-        (key) => dayMap[key] === shortDay
-      );
-      const dayData = groupedData[fullDay];
-      return dayData && dayData[rowIndex]
-        ? dayData[rowIndex][1] // <-- Only take 2nd value
-        : ""; // Empty if no data for that slot
-    })
-  );
-
-  console.log(data);
-  console.log("data", groupedData);
-  
-
 
   const redNumbers = ["44", "50", "38", "99", "61", "05", "77", "88", "66"];
 
   return (
     <div>
       <button className="go-bottom">Go to Bottom</button>
+
+      {/* 🔹 Single Combined Table */}
       <table className="matka-table">
         <thead>
           <tr>
             <th colSpan={7} className="title">
-              MILAN MORNING MATKA JODI RECORD 2019 - 2025
+              {titleNameHeading} MATKA RECORD (Jodi + Open) 2019 - 2025
             </th>
           </tr>
           <tr>
@@ -59,16 +161,22 @@ export default function MatkaTable({groupedData,lastIndexFortheResult}) {
           </tr>
         </thead>
         <tbody>
-          {data.map((row, rowIndex) => (
+          {combinedData.map((row, rowIndex) => (
             <tr key={rowIndex}>
-              {row.map((cell, colIndex) => (
-                <td
-                  key={colIndex}
-                  className={redNumbers.includes(cell.toString()) ? "red" : ""}
-                >
-                  {cell}
-                </td>
-              ))}
+              {row.map((cell, colIndex) => {
+                // 🔹 Check if *either* number is in red list
+                const shouldHighlight = redNumbers.some((num) =>
+                  cell.includes(num)
+                );
+                return (
+                  <td
+                    key={colIndex}
+                    className={shouldHighlight ? "red" : ""}
+                  >
+                    {cell}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>
