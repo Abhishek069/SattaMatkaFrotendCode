@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import LiveResultItem from "./LiveResultItem";
-import {api} from '../lib/api'
+import { api } from "../lib/api";
 
 const LiveResultSection = () => {
   const [results, setResults] = useState([]);
@@ -10,23 +10,41 @@ const LiveResultSection = () => {
     const fetchResults = async () => {
       try {
         const data = await api("/AllGames/latest-updates");
-        // Transform to only keep last resultNo entry
-        const formatted = data.map(game => {
-          const lastResult = game.resultNo?.[game.resultNo.length - 1];
-          let numbers = "";
 
-          // Check if the last element is an array before processing
-          if (Array.isArray(lastResult)) {
-            numbers = lastResult.slice(0, 3).join("-");
-          } else {
-            // Handle cases where resultNo is not an array of arrays
-            // If it's a string, use it directly. Otherwise, provide a default.
-            numbers = lastResult || "N/A"; 
+        // Transform to only keep last resultNo entry
+        const formatted = data.map((game) => {
+          console.log("Raw game:", game);
+
+          // ✅ Safely get last values
+          const lastOpen = game.openNo?.length
+            ? game.openNo[game.openNo.length - 1]
+            : null;
+          const lastClose = game.closeNo?.length
+            ? game.closeNo[game.closeNo.length - 1]
+            : null;
+
+          const OpenValue = lastOpen ? lastOpen.slice(0, 2) : "";
+          const closeValue = lastClose ? lastClose.slice(0, 2) : "";
+
+          // ✅ Build lastResult only if valid
+          let lastResult = "N/A";
+
+          if (OpenValue && closeValue) {
+            // ✅ Both present → show combined
+            lastResult = `${OpenValue[0]}-${OpenValue[1]}${closeValue[1]}-${closeValue[0]}`;
+          } else if (OpenValue) {
+            // ✅ Only open present
+            lastResult = `${OpenValue[0]}-${OpenValue[1]}`;
+          } else if (closeValue) {
+            // ✅ Only close present (optional, if you want to allow this case too)
+            lastResult = `${closeValue[0]}-${closeValue[1]}`;
           }
+
+          console.log("Processed result:", lastResult);
 
           return {
             title: game.name,
-            numbers: numbers
+            numbers: lastResult,
           };
         });
 
