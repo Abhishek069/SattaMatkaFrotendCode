@@ -141,7 +141,6 @@ export default function JodiPannelResultSection() {
   };
 
   const getDisplayResult = (item) => {
-    console.log()
   const lastOpen = item.openNo?.[item.openNo.length - 1] || [];
   const lastClose = item.closeNo?.[item.closeNo.length - 1] || [];
 
@@ -165,17 +164,11 @@ export default function JodiPannelResultSection() {
       .map((num) => num.trim())
       .filter((num) => num !== "");
 
-    console.log("You called me!");
-    console.log(editGame);
-    console.log(editGame.OpenOrclose);
-
     if (editGame.OpenOrclose) {
       newResultArray.push(editGame.date);
       newResultArray.push(editGame.OpenOrclose);
       newResultArray.push(editGame.day);
     }
-
-    console.log("Final Result Array:", newResultArray);
 
     try {
       const updateData = await api(`/AllGames/updateGame/${gameId}`, {
@@ -293,21 +286,13 @@ export default function JodiPannelResultSection() {
         };
 
         const start = parseTime(item.startTime);
-        // console.log(start,item.name);
-
         let displayResult = "No numbers";
 
         if (start) {
           const diffInMs = start - now; // positive if start is in the future
           const diffInMinutes = diffInMs / (1000 * 60);
-          // console.log("diff");
-
-          // console.log(diffInMinutes, item.name);
 
           if (diffInMinutes <= 5 && diffInMinutes >= 0) {
-            // If start time is 5 min or less away
-            // console.log("loadding...");
-
             displayResult = "Loading...";
           } else if (
             item.resultNo &&

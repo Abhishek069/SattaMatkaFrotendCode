@@ -13,7 +13,6 @@ const LiveResultSection = () => {
 
         // Transform to only keep last resultNo entry
         const formatted = data.map((game) => {
-          console.log("Raw game:", game);
 
           // ✅ Safely get last values
           const lastOpen = game.openNo?.length
@@ -39,8 +38,6 @@ const LiveResultSection = () => {
             // ✅ Only close present (optional, if you want to allow this case too)
             lastResult = `${closeValue[0]}-${closeValue[1]}`;
           }
-
-          console.log("Processed result:", lastResult);
 
           return {
             title: game.name,
