@@ -17,8 +17,7 @@ const JodiPanPage = () => {
       const data = await api(`/AllGames/${id}`);
       if (data.success) {
         setSingleGameData(data.data);
-        console.log(data.data);
-      } else {
+    } else {
         setError("Failed to fetch game data.");
       }
     } catch (err) {
@@ -80,8 +79,6 @@ const JodiPanPage = () => {
 
   // The description text now uses the fetched data safely
   const description = `Dpboss ${singleGameData.name} jodi chart, ${singleGameData.name} jodi chart, old ${singleGameData.name} jodi chart, dpboss ${singleGameData.name} chart, ${singleGameData.name} jodi record, ${singleGameData.name}jodi record, ${singleGameData.name} jodi chart 2015, ${singleGameData.name} jodi chart 2012, ${singleGameData.name} jodi chart 2012 to 2023, ${singleGameData.name} final ank, ${singleGameData.name} jodi chart.co, ${singleGameData.name} jodi chart matka, matka jodi chart ${singleGameData.name}, matka ${singleGameData.name} chart, satta ${singleGameData.name} chart jodi, ${singleGameData.name} state chart, ${singleGameData.name} chart result, डीपी बॉस, सट्टा चार्ट, सट्टा मटका जोड़ी चार्ट, सट्टा मटका जोड़ी चार्ट, ${singleGameData.name} मटका जोड़ी चार्ट, सट्टा मटका ${singleGameData.name} चार्ट जोड़ी, ${singleGameData.name} सट्टा चार्ट, ${singleGameData.name} जोड़ी चार्ट`;
-  console.log(groupedByDay);
-
   return (
     <div className="bg-danger border m-1 border-danger text-center py-2">
       <Header />
