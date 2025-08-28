@@ -30,7 +30,7 @@ export default function JodiPannelResultSection() {
   const [newGame, setNewGame] = useState({
     name: "",
     owner: "",
-    resultNo: "",
+    resultNo: "111-11-111",
     startTime: "",
     endTime: "",
   });
@@ -287,8 +287,8 @@ export default function JodiPannelResultSection() {
           if (diffInMinutes <= 5 && diffInMinutes >= 0) {
             displayResult = "Loading...";
           } else if (
-            Array.isArray(item.openNo) && item.openNo.length > 0 ||
-            Array.isArray(item.resultNo) && item.resultNo.length > 0
+            (Array.isArray(item.openNo) && item?.openNo.length > 0) ||
+            (Array.isArray(item.resultNo) && item?.resultNo.length > 0)
           ) {
             displayResult = <p>{getDisplayResult(item)}</p>;
           }
@@ -369,20 +369,22 @@ export default function JodiPannelResultSection() {
                     <label htmlFor="startTime">Start Time</label>
                     <input
                       id="startTime"
-                      type="text"
+                      type="time"
                       name="startTime"
                       value={newGame.startTime}
                       onChange={handleFormChange}
+                      required
                     />
                   </div>
                   <div className="form-group">
                     <label htmlFor="endTime">End Time</label>
                     <input
                       id="endTime"
-                      type="text"
+                      type="time"
                       name="endTime"
                       value={newGame.endTime}
                       onChange={handleFormChange}
+                      required
                     />
                   </div>
                   <div className="form-group">
@@ -394,7 +396,6 @@ export default function JodiPannelResultSection() {
                       placeholder="e.g. 111-33-555"
                       value={newGame.resultNo}
                       onChange={handleFormChange}
-                      required
                     />
                   </div>
                   <div className="button-group">
