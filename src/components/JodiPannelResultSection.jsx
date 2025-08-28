@@ -5,8 +5,6 @@ import { api } from "../lib/api";
 
 export default function JodiPannelResultSection() {
   const token = localStorage.getItem("authToken");
-  // const role = localStorage.getItem("userRole");
-
   const CurrentTime = Date();
 
   const [games, setGames] = useState([]);
@@ -15,6 +13,7 @@ export default function JodiPannelResultSection() {
 
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("add");
+
   let username = null;
   let role = null;
 
@@ -22,7 +21,7 @@ export default function JodiPannelResultSection() {
     try {
       const decoded = jwtDecode(token);
       role = decoded.role;
-      username = decoded.username; // adjust this key to match your backend payload
+      username = decoded.username;
     } catch (err) {
       console.error("Invalid token", err);
     }
@@ -133,40 +132,45 @@ export default function JodiPannelResultSection() {
     setEditGame({
       id: game._id,
       resultNo: "",
-      openOrClose: "", // ✅ consistent casing
+      openOrClose: "",
       day: dayName,
-      date: today_date, // ✅ store as "day"
+      date: today_date,
     });
     setShowEditModal(true);
   };
 
+  // ✅ Safe getDisplayResult
   const getDisplayResult = (item) => {
-  const lastOpen = item.openNo?.[item.openNo.length - 1] || [];
-  const lastClose = item.closeNo?.[item.closeNo.length - 1] || [];
+    const lastOpen = Array.isArray(item.openNo)
+      ? item.openNo[item.openNo.length - 1]
+      : [];
+    const lastClose = Array.isArray(item.closeNo)
+      ? item.closeNo[item.closeNo.length - 1]
+      : [];
 
-  const openMain = lastOpen[0] || "";
-  const openDigit = lastOpen[1] || "";
-  const closeDigit = lastClose[1] || "";
-  const closeMain = lastClose[0] || "";
+    const openMain = lastOpen?.[0] || "";
+    const openDigit = lastOpen?.[1] || "";
+    const closeDigit = lastClose?.[1] || "";
+    const closeMain = lastClose?.[0] || "";
 
-  // Format: openMain-openDigit+closeDigit-closeMain
-  return `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
-};
+    if (!openMain && !closeMain) return "No numbers";
+
+    return `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
+  };
 
   const handleUpdateGame = async (e) => {
     e.preventDefault();
 
     const gameId = editGame.id;
 
-    // split resultNo safely
     const newResultArray = (editGame.resultNo || "")
       .split("-")
       .map((num) => num.trim())
       .filter((num) => num !== "");
 
-    if (editGame.OpenOrclose) {
+    if (editGame.openOrClose) {
       newResultArray.push(editGame.date);
-      newResultArray.push(editGame.OpenOrclose);
+      newResultArray.push(editGame.openOrClose);
       newResultArray.push(editGame.day);
     }
 
@@ -178,7 +182,7 @@ export default function JodiPannelResultSection() {
       if (updateData.success) {
         fetchGamesAgain();
         setShowEditModal(false);
-        alert("Game Number update successfully!");
+        alert("Game Number updated successfully!");
       } else {
         alert("Failed to update game: " + updateData.message);
       }
@@ -196,12 +200,10 @@ export default function JodiPannelResultSection() {
     }
   };
 
-  // Handle agent form change
   const handleAgentChange = (e) => {
     setNewAgent({ ...newAgent, [e.target.name]: e.target.value });
   };
 
-  // Submit agent form
   const handleAddAgent = async (e) => {
     e.preventDefault();
     try {
@@ -215,6 +217,7 @@ export default function JodiPannelResultSection() {
         name: "",
         mobile: "",
         role: "",
+        password: "",
         address: "",
       });
     } catch (err) {
@@ -232,7 +235,6 @@ export default function JodiPannelResultSection() {
             setModalType("add");
             setShowModal(true);
           }}
-          // disabled={role !== 'Admin'}
           hidden={role !== "Admin"}
         >
           ADD GAME
@@ -257,16 +259,6 @@ export default function JodiPannelResultSection() {
         >
           DELETE
         </button>
-        <button
-          className="m-1 btn btn-lg btn-danger"
-          onClick={() => {
-            setModalType("delete");
-            setShowModal(true);
-          }}
-          hidden={role !== "Admin"}
-        >
-          Add Throw API
-        </button>
       </div>
 
       {games.map((item, index) => {
@@ -289,25 +281,16 @@ export default function JodiPannelResultSection() {
         let displayResult = "No numbers";
 
         if (start) {
-          const diffInMs = start - now; // positive if start is in the future
+          const diffInMs = start - now;
           const diffInMinutes = diffInMs / (1000 * 60);
 
           if (diffInMinutes <= 5 && diffInMinutes >= 0) {
             displayResult = "Loading...";
           } else if (
-            item.resultNo &&
-            Array.isArray(item.resultNo) &&
-            item.resultNo.length > 0
+            Array.isArray(item.openNo) && item.openNo.length > 0 ||
+            Array.isArray(item.resultNo) && item.resultNo.length > 0
           ) {
-            displayResult = Array.isArray(
-              item.openNo[item.openNo.length -1]
-              // item.resultNo[item.resultNo.length - 1]
-            )
-              // ? item.resultNo[item.resultNo.length - 1]
-              //     .filter((val) => !isNaN(val))
-              //     .join("-")
-              ? <p>{getDisplayResult(item)}</p>
-              : item.resultNo[item.resultNo.length - 1];
+            displayResult = <p>{getDisplayResult(item)}</p>;
           }
         }
 
@@ -352,11 +335,12 @@ export default function JodiPannelResultSection() {
         );
       })}
 
-      {/* Add/Delete/Agent Modal */}
+      {/* --- MODALS (Add / Delete / Agent / Edit) --- */}
       {showModal && (
         <div className="AddGameModelMainContainer">
           <div className="AddGameModelSeconContainer">
             {modalType === "add" ? (
+              /* Add Game Form */
               <>
                 <h4>Add New Game</h4>
                 <form onSubmit={handleAddGame}>
@@ -422,6 +406,7 @@ export default function JodiPannelResultSection() {
                 </form>
               </>
             ) : modalType === "delete" ? (
+              /* Delete Game Form */
               <>
                 <h4>Delete Game</h4>
                 <form onSubmit={handleDeleteGame}>
@@ -450,6 +435,7 @@ export default function JodiPannelResultSection() {
                 </form>
               </>
             ) : (
+              /* Add Agent Form */
               <>
                 <h4>Add New Agent</h4>
                 <form onSubmit={handleAddAgent}>
@@ -472,7 +458,6 @@ export default function JodiPannelResultSection() {
                       name="mobile"
                       value={newAgent.mobile}
                       onChange={(e) => {
-                        // Allow only digits and max 10 characters
                         const value = e.target.value.replace(/\D/g, "");
                         if (value.length <= 10) {
                           handleAgentChange({
@@ -498,7 +483,7 @@ export default function JodiPannelResultSection() {
                     />
                   </div>
                   <div className="form-group">
-                    <label htmlFor="role">Password</label>
+                    <label htmlFor="password">Password</label>
                     <input
                       id="password"
                       type="password"
@@ -544,12 +529,12 @@ export default function JodiPannelResultSection() {
             <h4>Add Result Number</h4>
             <form onSubmit={handleUpdateGame}>
               <div className="form-group">
-                <label htmlFor="day">Day</label>
+                <label htmlFor="openOrClose">Open / Close</label>
                 <select
-                  id="day"
-                  value={editGame.OpenOrclose}
+                  id="openOrClose"
+                  value={editGame.openOrClose}
                   onChange={(e) =>
-                    setEditGame({ ...editGame, OpenOrclose: e.target.value })
+                    setEditGame({ ...editGame, openOrClose: e.target.value })
                   }
                   required
                 >
@@ -559,8 +544,7 @@ export default function JodiPannelResultSection() {
                 </select>
               </div>
 
-              {/* Show input only if Open or Close is selected */}
-              {editGame.OpenOrclose && (
+              {editGame.openOrClose && (
                 <div className="form-group">
                   <label htmlFor="resultNo">Result No</label>
                   <input
