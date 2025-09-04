@@ -10,6 +10,7 @@ export default function JodiPannelResultSection() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [gameRelatedToOwner, setGameRelatedToOwner] = useState()
 
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState("add");
@@ -36,6 +37,8 @@ export default function JodiPannelResultSection() {
   });
 
   const [deleteGameName, setDeleteGameName] = useState("");
+  const [linkForUpdateGame, setLinkForUpdateGame] = useState('')
+  const [allGamesformlink, setAllGamesformlink] = useState('')
 
   const [editGame, setEditGame] = useState({
     id: "",
@@ -57,6 +60,7 @@ export default function JodiPannelResultSection() {
 
   const navigate = useNavigate();
 
+  
   const fetchGamesAgain = async () => {
     try {
       const data = await api("/AllGames/");
@@ -86,8 +90,8 @@ export default function JodiPannelResultSection() {
   const handleAddGame = async (e) => {
     e.preventDefault();
     const resultNoArray = newGame.resultNo
-      .split("-")
-      .map((num) => num.trim())
+    .split("-")
+    .map((num) => num.trim())
       .filter((num) => num !== "");
 
     resultNoArray.push(newGame.day);
@@ -138,59 +142,185 @@ export default function JodiPannelResultSection() {
     });
     setShowEditModal(true);
   };
-
+  
   // ✅ Safe getDisplayResult
-  const getDisplayResult = (item) => {
-    const lastOpen = Array.isArray(item.openNo)
-      ? item.openNo[item.openNo.length - 1]
-      : [];
-    const lastClose = Array.isArray(item.closeNo)
-      ? item.closeNo[item.closeNo.length - 1]
-      : [];
+    // const getDisplayResult = (item) => {
+    //   console.log(item);
+      
+    //   const lastOpen = Array.isArray(item.openNo)
+    //     ? item.openNo[item.openNo.length - 1]
+    //     : [];
+    //   const lastClose = Array.isArray(item.closeNo)
+    //     ? item.closeNo[item.closeNo.length - 1]
+    //     : [];
 
-    const openMain = lastOpen?.[0] || "";
-    const openDigit = lastOpen?.[1] || "";
-    const closeDigit = lastClose?.[1] || "";
-    const closeMain = lastClose?.[0] || "";
+    //   const openMain = lastOpen?.[0] || "";
+    //   const openDigit = lastOpen?.[1] || "";
+    //   const closeDigit = lastClose?.[1] || "";
+    //   const closeMain = lastClose?.[0] || "";
 
-    if (!openMain && !closeMain) return "No numbers";
+    //   if (!openMain && !closeMain) return "No numbers";
 
+    //   return `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
+    // };
+
+    const getDisplayResult = (item) => {
+  const lastOpen = Array.isArray(item.openNo) && item.openNo.length > 0
+    ? item.openNo[item.openNo.length - 1]
+    : null;
+  const lastClose = Array.isArray(item.closeNo) && item.closeNo.length > 0
+    ? item.closeNo[item.closeNo.length - 1]
+    : null;
+
+  if (!lastOpen && !lastClose) return "No numbers";
+
+  // Extract values safely
+  const openMain = lastOpen?.[0] || "";
+  const openDigit = lastOpen?.[1] || "";
+  const openTime = lastOpen?.[2] || "";
+  // const openStatus = lastOpen?.[3] || "";
+  const openDay = lastOpen?.[4] || "";
+
+  const closeMain = lastClose?.[0] || "";
+  const closeDigit = lastClose?.[1] || "";
+  const closeTime = lastClose?.[2] || "";
+  // const closeStatus = lastClose?.[3] || "";
+  const closeDay = lastClose?.[4] || "";
+
+  // If both exist and are same day → combine
+  if (lastOpen && lastClose && openDay === closeDay) {
     return `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
-  };
+  }
 
+  // If only open exists OR open is newer
+  if (lastOpen && (!lastClose || new Date(openTime) > new Date(closeTime))) {
+    return `${openMain}-${openDigit}`;
+  }
+
+  // If only close exists OR close is newer
+  if (lastClose && (!lastOpen || new Date(closeTime) > new Date(openTime))) {
+    return `${closeMain}-${closeDigit}`;
+  }
+
+  return "No numbers";
+};
+
+  
+    // const getOwnerGames = async(e) =>{
+    //   const gameRelatedToOwer = games.map((gameItem)=>{
+    //     if(gameItem.owner == username || role === 'Admin'){
+    //       return {name:gameItem.name,
+    //               id: gameItem.id
+    //       }
+    //     }
+    //   })
+    //   setGameRelatedToOwner(gameRelatedToOwer)
+    //   console.log("hello",e, gameRelatedToOwer); 
+    // }
+
+  
+
+  // const handleUpdateGame = async (e) => {
+  //   e.preventDefault();
+
+  //   const gameId = editGame.id;
+
+  //   const newResultArray = (editGame.resultNo || "")
+  //     .split("-")
+  //     .map((num) => num.trim())
+  //     .filter((num) => num !== "");
+
+  //   if (editGame.openOrClose) {
+  //     newResultArray.push(editGame.date);
+  //     newResultArray.push(editGame.openOrClose);
+  //     newResultArray.push(editGame.day);
+  //   }
+
+  //   try {
+  //     const updateData = await api(`/AllGames/updateGame/${gameId}`, {
+  //       method: "PUT",
+  //       body: JSON.stringify({ resultNo: newResultArray }),
+  //     });
+  //     if (updateData.success) {
+  //       fetchGamesAgain();
+  //       setShowEditModal(false);
+  //       alert("Game Number updated successfully!");
+  //     } else {
+  //       alert("Failed to update game: " + updateData.message);
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert("Error updating game");
+  //   }
+  // };
   const handleUpdateGame = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const gameId = editGame.id;
+  const gameId = editGame.id;
 
-    const newResultArray = (editGame.resultNo || "")
-      .split("-")
-      .map((num) => num.trim())
-      .filter((num) => num !== "");
+  const inputValue = editGame.resultNo || "";
+  const parts = inputValue.split("-").map((num) => num.trim());
 
-    if (editGame.openOrClose) {
-      newResultArray.push(editGame.date);
-      newResultArray.push(editGame.openOrClose);
-      newResultArray.push(editGame.day);
+  if (parts.length === 0 || !/^\d+$/.test(parts[0])) {
+    alert("Invalid format. Please enter a number like 123-7.");
+    return;
+  }
+
+  const mainNumber = parts[0];
+  const providedCheckDigit = parts[1];
+
+  // ✅ Rule 1: First digit must be smaller than second digit
+  if (mainNumber.length >= 2) {
+    const firstDigit = parseInt(mainNumber[0], 10);
+    const secondDigit = parseInt(mainNumber[1], 10);
+    if (firstDigit >= secondDigit) {
+      alert("Invalid number: first digit must be smaller than second digit.");
+      return;
     }
+  }
 
-    try {
-      const updateData = await api(`/AllGames/updateGame/${gameId}`, {
-        method: "PUT",
-        body: JSON.stringify({ resultNo: newResultArray }),
-      });
-      if (updateData.success) {
-        fetchGamesAgain();
-        setShowEditModal(false);
-        alert("Game Number updated successfully!");
-      } else {
-        alert("Failed to update game: " + updateData.message);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error updating game");
+  // ✅ Rule 2: Validate last 3 digit sum check
+  if (mainNumber.length >= 3) {
+    const lastThree = mainNumber.slice(-3).split("").map(Number);
+    const sum = lastThree.reduce((a, b) => a + b, 0);
+    const expectedCheckDigit = sum % 10; // last digit of sum
+
+    if (providedCheckDigit && parseInt(providedCheckDigit, 10) !== expectedCheckDigit) {
+      alert(
+        `Invalid number: check digit should be ${expectedCheckDigit} (sum of last 3 digits).`
+      );
+      return;
     }
-  };
+  }
+
+  // Prepare result array
+  const newResultArray = [mainNumber];
+  if (providedCheckDigit) newResultArray.push(providedCheckDigit);
+
+  if (editGame.openOrClose) {
+    newResultArray.push(editGame.date);
+    newResultArray.push(editGame.openOrClose);
+    newResultArray.push(editGame.day);
+  }
+
+  try {
+    const updateData = await api(`/AllGames/updateGame/${gameId}`, {
+      method: "PUT",
+      body: JSON.stringify({ resultNo: newResultArray }),
+    });
+    if (updateData.success) {
+      fetchGamesAgain();
+      setShowEditModal(false);
+      alert("Game Number updated successfully!");
+    } else {
+      alert("Failed to update game: " + updateData.message);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Error updating game");
+  }
+};
+
 
   const handlePageChange = (game, value) => {
     if (value !== "panel") {
@@ -225,6 +355,77 @@ export default function JodiPannelResultSection() {
     }
   };
 
+// const fetchAndUpdateGame = async (e) => {
+//   e.preventDefault(); // stop form reload
+
+//   try {
+//     const response = await api("/AllGames/api/getGameFormLink", {
+//       method: "POST",
+//       body: JSON.stringify({ url: linkForUpdateGame }),
+//     });
+
+//     console.log("API Raw Response:", response);
+
+//     // If your api helper already returns parsed JSON
+//     const data = response.data.data;  
+//     console.log("Fetched Data:", data);
+
+//     // If the data is a list of games, update your state
+//     if (Array.isArray(data)) {
+//       getOwnerGames(); // ✅ actually call it
+//       setAllGamesformlink(data);
+//       alert("Games imported successfully!");
+//     } else {
+//       console.warn("Unexpected data format:", data);
+//     }
+
+//     setShowModal(false);
+//     setLinkForUpdateGame("");
+//   } catch (err) {
+//     console.error("Error fetching games:", err);
+//     alert("Failed to fetch games. Check the link.");
+//   }
+// };
+const fetchAndUpdateGame = async (e) => {
+  e.preventDefault(); // stop form reload
+
+  try {
+    const response = await api("/AllGames/api/getGameFormLink", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // Authorization: `Bearer ${localStorage.getItem("authToken")}`, // ✅ send token
+      },
+      body: JSON.stringify({ url: linkForUpdateGame, userName: username }),
+    });
+
+    console.log("API Raw Response:", response);
+
+    if (response.success) {
+      // response.results = [{ game: "KUBER", status: "updated" }, ...]
+      setAllGamesformlink(response.results);
+
+      // ✅ show summary to user
+      const updated = response.results.filter((r) => r.status === "updated").length;
+      const skipped = response.results.length - updated;
+      alert(
+        `✅ ${updated} games updated, ❌ ${skipped} skipped (not owner or invalid results).`
+      );
+    } else {
+      alert("Failed: " + (response.error || "Unexpected error"));
+    }
+
+    setShowModal(false);
+    setLinkForUpdateGame("");
+  } catch (err) {
+    console.error("Error fetching games:", err);
+    alert("Failed to fetch or update games. Check the link.");
+  }
+};
+
+
+
+
   return (
     <div className="bg-warning border border-white m-1 p-3">
       <div className="bg-pink m-1 p-2 jodi-panel-container-second">
@@ -258,6 +459,16 @@ export default function JodiPannelResultSection() {
           hidden={role !== "Admin"}
         >
           DELETE
+        </button>
+        <button
+          className="m-1 btn btn-lg btn-info"
+          onClick={() => {
+            setModalType("Import By Link");
+            setShowModal(true);
+          }}
+          hidden={role !== "Admin"}
+        >
+          Add Link to Edit
         </button>
       </div>
 
@@ -424,6 +635,35 @@ export default function JodiPannelResultSection() {
                   <div className="button-group">
                     <button type="submit" className="btn btn-danger">
                       Delete
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setShowModal(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : modalType === "Import By Link" ? (
+              /* Delete Game Form */
+              <>
+                <h4>Update the games thorw the Link</h4>
+                <form onSubmit={fetchAndUpdateGame}>
+                  <div className="form-group">
+                    <label htmlFor="deleteGameName">Provide the link</label>
+                    <input
+                      id="deleteGameName"
+                      type="text"
+                      value={linkForUpdateGame}
+                      onChange={(e) => setLinkForUpdateGame(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="button-group">
+                    <button type="submit" className="btn btn-danger">
+                      Done
                     </button>
                     <button
                       type="button"
