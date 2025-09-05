@@ -396,7 +396,7 @@ const fetchAndUpdateGame = async (e) => {
         "Content-Type": "application/json",
         // Authorization: `Bearer ${localStorage.getItem("authToken")}`, // ✅ send token
       },
-      body: JSON.stringify({ url: linkForUpdateGame, userName: username }),
+      body: JSON.stringify({ url: linkForUpdateGame, userName: username, admin:role }),
     });
 
     console.log("API Raw Response:", response);
