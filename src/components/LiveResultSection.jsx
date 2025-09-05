@@ -11,10 +11,7 @@ const LiveResultSection = () => {
       try {
         const data = await api("/AllGames/latest-updates");
 
-        // Transform to only keep last resultNo entry
         const formatted = data.map((game) => {
-
-          // ✅ Safely get last values
           const lastOpen = game.openNo?.length
             ? game.openNo[game.openNo.length - 1]
             : null;
@@ -22,21 +19,41 @@ const LiveResultSection = () => {
             ? game.closeNo[game.closeNo.length - 1]
             : null;
 
-          const OpenValue = lastOpen ? lastOpen.slice(0, 2) : "";
-          const closeValue = lastClose ? lastClose.slice(0, 2) : "";
+          if (!lastOpen && !lastClose) {
+            return {
+              title: game.name,
+              numbers: "N/A",
+            };
+          }
 
-          // ✅ Build lastResult only if valid
+          // Extract parts
+          const openMain = lastOpen?.[0] || "";
+          const openDigit = lastOpen?.[1] || "";
+          const openTime = lastOpen?.[2] || "";
+          const openDay = lastOpen?.[4] || "";
+
+          const closeMain = lastClose?.[0] || "";
+          const closeDigit = lastClose?.[1] || "";
+          const closeTime = lastClose?.[2] || "";
+          const closeDay = lastClose?.[4] || "";
+
           let lastResult = "N/A";
 
-          if (OpenValue && closeValue) {
-            // ✅ Both present → show combined
-            lastResult = `${OpenValue[0]}-${OpenValue[1]}${closeValue[1]}-${closeValue[0]}`;
-          } else if (OpenValue) {
-            // ✅ Only open present
-            lastResult = `${OpenValue[0]}-${OpenValue[1]}`;
-          } else if (closeValue) {
-            // ✅ Only close present (optional, if you want to allow this case too)
-            lastResult = `${closeValue[0]}-${closeValue[1]}`;
+          if (lastOpen && lastClose && openDay === closeDay) {
+            // ✅ Same day → combine
+            lastResult = `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
+          } else if (
+            lastOpen &&
+            (!lastClose || new Date(openTime) > new Date(closeTime))
+          ) {
+            // ✅ Only open or newer open
+            lastResult = `${openMain}-${openDigit}`;
+          } else if (
+            lastClose &&
+            (!lastOpen || new Date(closeTime) > new Date(openTime))
+          ) {
+            // ✅ Only close or newer close
+            lastResult = `${closeMain}-${closeDigit}`;
           }
 
           return {
