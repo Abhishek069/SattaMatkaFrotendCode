@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +9,7 @@ export default function JodiPannelResultSection() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [nameForPop, setNameForPop] = useState('')
+  const [nameForPop, setNameForPop] = useState("");
   const [nameSizes, setNameSizes] = useState({}); // ✅ store font size per game
 
   const [editGame, setEditGame] = useState({
@@ -21,6 +20,9 @@ export default function JodiPannelResultSection() {
     date: "",
   });
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showLiveModal, setShowLiveModal] = useState(false);
+  const [selectedGameId, setSelectedGameId] = useState(null);
+  const [selectedTime, setSelectedTime] = useState("");
 
   let username = null;
   let role = null;
@@ -99,7 +101,7 @@ export default function JodiPannelResultSection() {
       date: today_date,
     });
     setShowEditModal(true);
-    setNameForPop(game.name)
+    setNameForPop(game.name);
   };
 
   const handleUpdateGame = async (e) => {
@@ -244,34 +246,43 @@ export default function JodiPannelResultSection() {
             </button>
             <div>
               {/* ✅ Game name with adjustable font size */}
-              <h4 style={{ fontSize: `${nameSizes[item._id] || 18}px` }}>
-                {item.name}
-              </h4>
+              <div>
+                {role === "Admin" ? (
+                  <>
+                    <h4 style={{ fontSize: `${nameSizes[item._id] || 18}px` }}>
+                      {item.name}
+                    </h4>
 
-              {/* ✅ Font size slider + save button */}
-              <input
-                type="range"
-                min="12"
-                max="40"
-                value={nameSizes[item._id] || 18}
-                onChange={(e) =>
-                  setNameSizes({
-                    ...nameSizes,
-                    [item._id]: Number(e.target.value),
-                  })
-                }
-              />
-              <span className="ml-2">{nameSizes[item._id] || 18}px</span>
-              <button
-                className="btn btn-success btn-sm ml-2"
-                onClick={() => handleSaveFontSize(item._id)}
-              >
-                Save
-              </button>
+                    {/* ✅ Font size slider + save button */}
+                    <input
+                      type="range"
+                      min="12"
+                      max="40"
+                      value={nameSizes[item._id] || 18}
+                      onChange={(e) =>
+                        setNameSizes({
+                          ...nameSizes,
+                          [item._id]: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <span className="ml-2">{nameSizes[item._id] || 18}px</span>
+                    <button
+                      className="btn btn-success btn-sm ml-2"
+                      onClick={() => handleSaveFontSize(item._id)}
+                    >
+                      Save
+                    </button>
+                  </>
+                ) : (
+                  <h4>{item.name}</h4>
+                )}
+              </div>
 
               <h5>{displayResult}</h5>
 
               {/* ✅ Original EDIT button */}
+              <div className="d-flex justify-content-around">
               <button
                 className="btn btn-primary"
                 onClick={() => handleEditClick(item)}
@@ -284,12 +295,23 @@ export default function JodiPannelResultSection() {
               >
                 EDIT
               </button>
-
+              <button
+                className="btn btn-info ml-2"
+                onClick={() => {
+                  setSelectedGameId(item._id);
+                  setShowLiveModal(true);
+                }}
+                >
+                Set Live Time
+              </button>
+                </div>
+            
               <div className="timeStamp-for-jodi-panel">
                 <p>{item.startTime}</p>
                 <p>{item.endTime}</p>
               </div>
             </div>
+
             <button
               onClick={() => handlePageChange(item, "panel")}
               className="btn btn-sm btn-primary button-jodi-panel"
@@ -301,6 +323,54 @@ export default function JodiPannelResultSection() {
       })}
 
       {/* ✅ Edit Modal for Results */}
+      {showLiveModal && (
+        <div className="AddGameModelMainContainer">
+          <div className="AddGameModelSeconContainer">
+            <h4>Set Live Time</h4>
+            <input
+              type="datetime-local"
+              value={selectedTime}
+              onChange={(e) => setSelectedTime(e.target.value)}
+            />
+            <div className="button-group mt-3">
+              <button
+                className="btn btn-success"
+                onClick={async () => {
+                  try {
+                    const response = await api(
+                      `/AllGames/setLiveTime/${selectedGameId}`,
+                      {
+                        method: "PUT",
+                        body: JSON.stringify({ liveTime: selectedTime }),
+                      }
+                    );
+                    if (response.success) {
+                      alert("Live time set successfully!");
+                      fetchGamesAgain();
+                      setShowLiveModal(false);
+                      setSelectedTime("");
+                    } else {
+                      alert("Failed: " + response.message);
+                    }
+                  } catch (err) {
+                    console.error(err);
+                    alert("Error setting live time");
+                  }
+                }}
+              >
+                Save
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowLiveModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showEditModal && (
         <div className="AddGameModelMainContainer">
           <div className="AddGameModelSeconContainer">
