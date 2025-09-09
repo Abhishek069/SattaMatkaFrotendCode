@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
@@ -5,15 +6,21 @@ import { api } from "../lib/api";
 
 export default function JodiPannelResultSection() {
   const token = localStorage.getItem("authToken");
-  const CurrentTime = Date();
 
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [gameRelatedToOwner, setGameRelatedToOwner] = useState()
+  const [nameForPop, setNameForPop] = useState('')
+  const [nameSizes, setNameSizes] = useState({}); // ✅ store font size per game
 
-  const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState("add");
+  const [editGame, setEditGame] = useState({
+    id: "",
+    resultNo: "",
+    openOrClose: "",
+    day: "",
+    date: "",
+  });
+  const [showEditModal, setShowEditModal] = useState(false);
 
   let username = null;
   let role = null;
@@ -28,44 +35,20 @@ export default function JodiPannelResultSection() {
     }
   }
 
-  const [newGame, setNewGame] = useState({
-    name: "",
-    owner: "",
-    resultNo: "111-11-111",
-    startTime: "",
-    endTime: "",
-  });
-
-  const [deleteGameName, setDeleteGameName] = useState("");
-  const [linkForUpdateGame, setLinkForUpdateGame] = useState('')
-  const [allGamesformlink, setAllGamesformlink] = useState('')
-
-  const [editGame, setEditGame] = useState({
-    id: "",
-    resultNo: "",
-    openOrClose: "",
-    day: "",
-    date: "",
-  });
-  const [showEditModal, setShowEditModal] = useState(false);
-
-  // -------- New Agent States ----------
-  const [newAgent, setNewAgent] = useState({
-    name: "",
-    mobile: "",
-    role: "",
-    password: "",
-    address: "",
-  });
-
   const navigate = useNavigate();
 
-  
   const fetchGamesAgain = async () => {
     try {
       const data = await api("/AllGames/");
       if (data.success) {
         setGames(data.data);
+
+        // ✅ preload font sizes from backend if available
+        const sizes = {};
+        data.data.forEach((game) => {
+          sizes[game._id] = game.fontSize || 18;
+        });
+        setNameSizes(sizes);
       } else {
         setError("Failed to fetch data");
       }
@@ -83,55 +66,30 @@ export default function JodiPannelResultSection() {
   if (loading) return <div>Loading games...</div>;
   if (error) return <div>Error: {error}</div>;
 
-  const handleFormChange = (e) => {
-    setNewGame({ ...newGame, [e.target.name]: e.target.value });
-  };
-
-  const handleAddGame = async (e) => {
-    e.preventDefault();
-    const resultNoArray = newGame.resultNo
-    .split("-")
-    .map((num) => num.trim())
-      .filter((num) => num !== "");
-
-    resultNoArray.push(newGame.day);
-
+  // ✅ Save font size to backend
+  const handleSaveFontSize = async (gameId) => {
     try {
-      await api("/AllGames/addGame", {
-        method: "POST",
-        body: JSON.stringify({ ...newGame, resultNo: resultNoArray }),
+      const response = await api(`/AllGames/saveFontSize/${gameId}`, {
+        method: "PUT",
+        body: JSON.stringify({ fontSize: nameSizes[gameId] }),
       });
-      fetchGamesAgain();
-      setShowModal(false);
-      setNewGame({
-        name: "",
-        owner: "",
-        resultNo: "",
-        startTime: "",
-        endTime: "",
-      });
-      alert("Game Added successfully!");
-    } catch (err) {
-      console.error("Error adding game:", err);
-    }
-  };
 
-  const handleDeleteGame = async (e) => {
-    e.preventDefault();
-    try {
-      await api(`/AllGames/deleteGame/${deleteGameName}`, { method: "DELETE" });
-      fetchGamesAgain();
-      setShowModal(false);
-      setDeleteGameName("");
-      alert("Game Deleted successfully!");
+      if (response.success) {
+        alert("Font size saved successfully!");
+      } else {
+        alert("Failed to save font size: " + response.message);
+      }
     } catch (err) {
-      console.error("Error deleting game:", err);
+      console.error(err);
+      alert("Error saving font size");
     }
   };
 
   const handleEditClick = (game) => {
     const today_date = new Date();
-    const dayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
+    const dayName = new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+    });
 
     setEditGame({
       id: game._id,
@@ -141,186 +99,114 @@ export default function JodiPannelResultSection() {
       date: today_date,
     });
     setShowEditModal(true);
+    setNameForPop(game.name)
   };
-  
-  // ✅ Safe getDisplayResult
-    // const getDisplayResult = (item) => {
-    //   console.log(item);
-      
-    //   const lastOpen = Array.isArray(item.openNo)
-    //     ? item.openNo[item.openNo.length - 1]
-    //     : [];
-    //   const lastClose = Array.isArray(item.closeNo)
-    //     ? item.closeNo[item.closeNo.length - 1]
-    //     : [];
 
-    //   const openMain = lastOpen?.[0] || "";
-    //   const openDigit = lastOpen?.[1] || "";
-    //   const closeDigit = lastClose?.[1] || "";
-    //   const closeMain = lastClose?.[0] || "";
-
-    //   if (!openMain && !closeMain) return "No numbers";
-
-    //   return `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
-    // };
-
-    const getDisplayResult = (item) => {
-  const lastOpen = Array.isArray(item.openNo) && item.openNo.length > 0
-    ? item.openNo[item.openNo.length - 1]
-    : null;
-  const lastClose = Array.isArray(item.closeNo) && item.closeNo.length > 0
-    ? item.closeNo[item.closeNo.length - 1]
-    : null;
-
-  if (!lastOpen && !lastClose) return "No numbers";
-
-  // Extract values safely
-  const openMain = lastOpen?.[0] || "";
-  const openDigit = lastOpen?.[1] || "";
-  const openTime = lastOpen?.[2] || "";
-  // const openStatus = lastOpen?.[3] || "";
-  const openDay = lastOpen?.[4] || "";
-
-  const closeMain = lastClose?.[0] || "";
-  const closeDigit = lastClose?.[1] || "";
-  const closeTime = lastClose?.[2] || "";
-  // const closeStatus = lastClose?.[3] || "";
-  const closeDay = lastClose?.[4] || "";
-
-  // If both exist and are same day → combine
-  if (lastOpen && lastClose && openDay === closeDay) {
-    return `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
-  }
-
-  // If only open exists OR open is newer
-  if (lastOpen && (!lastClose || new Date(openTime) > new Date(closeTime))) {
-    return `${openMain}-${openDigit}`;
-  }
-
-  // If only close exists OR close is newer
-  if (lastClose && (!lastOpen || new Date(closeTime) > new Date(openTime))) {
-    return `${closeMain}-${closeDigit}`;
-  }
-
-  return "No numbers";
-};
-
-  
-    // const getOwnerGames = async(e) =>{
-    //   const gameRelatedToOwer = games.map((gameItem)=>{
-    //     if(gameItem.owner == username || role === 'Admin'){
-    //       return {name:gameItem.name,
-    //               id: gameItem.id
-    //       }
-    //     }
-    //   })
-    //   setGameRelatedToOwner(gameRelatedToOwer)
-    //   console.log("hello",e, gameRelatedToOwer); 
-    // }
-
-  
-
-  // const handleUpdateGame = async (e) => {
-  //   e.preventDefault();
-
-  //   const gameId = editGame.id;
-
-  //   const newResultArray = (editGame.resultNo || "")
-  //     .split("-")
-  //     .map((num) => num.trim())
-  //     .filter((num) => num !== "");
-
-  //   if (editGame.openOrClose) {
-  //     newResultArray.push(editGame.date);
-  //     newResultArray.push(editGame.openOrClose);
-  //     newResultArray.push(editGame.day);
-  //   }
-
-  //   try {
-  //     const updateData = await api(`/AllGames/updateGame/${gameId}`, {
-  //       method: "PUT",
-  //       body: JSON.stringify({ resultNo: newResultArray }),
-  //     });
-  //     if (updateData.success) {
-  //       fetchGamesAgain();
-  //       setShowEditModal(false);
-  //       alert("Game Number updated successfully!");
-  //     } else {
-  //       alert("Failed to update game: " + updateData.message);
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //     alert("Error updating game");
-  //   }
-  // };
   const handleUpdateGame = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const gameId = editGame.id;
+    const gameId = editGame.id;
+    const inputValue = editGame.resultNo || "";
+    const parts = inputValue.split("-").map((num) => num.trim());
 
-  const inputValue = editGame.resultNo || "";
-  const parts = inputValue.split("-").map((num) => num.trim());
-
-  if (parts.length === 0 || !/^\d+$/.test(parts[0])) {
-    alert("Invalid format. Please enter a number like 123-7.");
-    return;
-  }
-
-  const mainNumber = parts[0];
-  const providedCheckDigit = parts[1];
-
-  // ✅ Rule 1: First digit must be smaller than second digit
-  if (mainNumber.length >= 2) {
-    const firstDigit = parseInt(mainNumber[0], 10);
-    const secondDigit = parseInt(mainNumber[1], 10);
-    if (firstDigit >= secondDigit) {
-      alert("Invalid number: first digit must be smaller than second digit.");
+    if (parts.length === 0 || !/^\d+$/.test(parts[0])) {
+      alert("Invalid format. Please enter a number like 123-7.");
       return;
     }
-  }
 
-  // ✅ Rule 2: Validate last 3 digit sum check
-  if (mainNumber.length >= 3) {
-    const lastThree = mainNumber.slice(-3).split("").map(Number);
-    const sum = lastThree.reduce((a, b) => a + b, 0);
-    const expectedCheckDigit = sum % 10; // last digit of sum
+    const mainNumber = parts[0];
+    const providedCheckDigit = parts[1];
 
-    if (providedCheckDigit && parseInt(providedCheckDigit, 10) !== expectedCheckDigit) {
-      alert(
-        `Invalid number: check digit should be ${expectedCheckDigit} (sum of last 3 digits).`
-      );
-      return;
+    // ✅ Rule 1: First digit must be smaller than second digit
+    if (mainNumber.length >= 2) {
+      const firstDigit = parseInt(mainNumber[0], 10);
+      const secondDigit = parseInt(mainNumber[1], 10);
+      if (firstDigit >= secondDigit) {
+        alert("Invalid number: first digit must be smaller than second digit.");
+        return;
+      }
     }
-  }
 
-  // Prepare result array
-  const newResultArray = [mainNumber];
-  if (providedCheckDigit) newResultArray.push(providedCheckDigit);
+    // ✅ Rule 2: Validate last 3 digit sum check
+    if (mainNumber.length >= 3) {
+      const lastThree = mainNumber.slice(-3).split("").map(Number);
+      const sum = lastThree.reduce((a, b) => a + b, 0);
+      const expectedCheckDigit = sum % 10;
 
-  if (editGame.openOrClose) {
-    newResultArray.push(editGame.date);
-    newResultArray.push(editGame.openOrClose);
-    newResultArray.push(editGame.day);
-  }
-
-  try {
-    const updateData = await api(`/AllGames/updateGame/${gameId}`, {
-      method: "PUT",
-      body: JSON.stringify({ resultNo: newResultArray }),
-    });
-    if (updateData.success) {
-      fetchGamesAgain();
-      setShowEditModal(false);
-      alert("Game Number updated successfully!");
-    } else {
-      alert("Failed to update game: " + updateData.message);
+      if (
+        providedCheckDigit &&
+        parseInt(providedCheckDigit, 10) !== expectedCheckDigit
+      ) {
+        alert(
+          `Invalid number: check digit should be ${expectedCheckDigit} (sum of last 3 digits).`
+        );
+        return;
+      }
     }
-  } catch (err) {
-    console.error(err);
-    alert("Error updating game");
-  }
-};
 
+    const newResultArray = [mainNumber];
+    if (providedCheckDigit) newResultArray.push(providedCheckDigit);
+
+    if (editGame.openOrClose) {
+      newResultArray.push(editGame.date);
+      newResultArray.push(editGame.openOrClose);
+      newResultArray.push(editGame.day);
+    }
+
+    try {
+      const updateData = await api(`/AllGames/updateGame/${gameId}`, {
+        method: "PUT",
+        body: JSON.stringify({ resultNo: newResultArray }),
+      });
+      if (updateData.success) {
+        fetchGamesAgain();
+        setShowEditModal(false);
+        alert("Game Number updated successfully!");
+      } else {
+        alert("Failed to update game: " + updateData.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating game");
+    }
+  };
+
+  const getDisplayResult = (item) => {
+    const lastOpen =
+      Array.isArray(item.openNo) && item.openNo.length > 0
+        ? item.openNo[item.openNo.length - 1]
+        : null;
+    const lastClose =
+      Array.isArray(item.closeNo) && item.closeNo.length > 0
+        ? item.closeNo[item.closeNo.length - 1]
+        : null;
+
+    if (!lastOpen && !lastClose) return "No numbers";
+
+    const openMain = lastOpen?.[0] || "";
+    const openDigit = lastOpen?.[1] || "";
+    const openTime = lastOpen?.[2] || "";
+    const openDay = lastOpen?.[4] || "";
+
+    const closeMain = lastClose?.[0] || "";
+    const closeDigit = lastClose?.[1] || "";
+    const closeTime = lastClose?.[2] || "";
+    const closeDay = lastClose?.[4] || "";
+
+    if (lastOpen && lastClose && openDay === closeDay) {
+      return `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
+    }
+
+    if (lastOpen && (!lastClose || new Date(openTime) > new Date(closeTime))) {
+      return `${openMain}-${openDigit}`;
+    }
+
+    if (lastClose && (!lastOpen || new Date(closeTime) > new Date(openTime))) {
+      return `${closeMain}-${closeDigit}`;
+    }
+
+    return "No numbers";
+  };
 
   const handlePageChange = (game, value) => {
     if (value !== "panel") {
@@ -330,179 +216,19 @@ export default function JodiPannelResultSection() {
     }
   };
 
-  const handleAgentChange = (e) => {
-    setNewAgent({ ...newAgent, [e.target.name]: e.target.value });
-  };
-
-  const handleAddAgent = async (e) => {
-    e.preventDefault();
-    try {
-      await api("/user/addUser", {
-        method: "POST",
-        body: JSON.stringify(newAgent),
-      });
-      alert("Agent added successfully!");
-      setShowModal(false);
-      setNewAgent({
-        name: "",
-        mobile: "",
-        role: "",
-        password: "",
-        address: "",
-      });
-    } catch (err) {
-      console.error("Error adding agent:", err);
-    }
-  };
-
-// const fetchAndUpdateGame = async (e) => {
-//   e.preventDefault(); // stop form reload
-
-//   try {
-//     const response = await api("/AllGames/api/getGameFormLink", {
-//       method: "POST",
-//       body: JSON.stringify({ url: linkForUpdateGame }),
-//     });
-
-//     console.log("API Raw Response:", response);
-
-//     // If your api helper already returns parsed JSON
-//     const data = response.data.data;  
-//     console.log("Fetched Data:", data);
-
-//     // If the data is a list of games, update your state
-//     if (Array.isArray(data)) {
-//       getOwnerGames(); // ✅ actually call it
-//       setAllGamesformlink(data);
-//       alert("Games imported successfully!");
-//     } else {
-//       console.warn("Unexpected data format:", data);
-//     }
-
-//     setShowModal(false);
-//     setLinkForUpdateGame("");
-//   } catch (err) {
-//     console.error("Error fetching games:", err);
-//     alert("Failed to fetch games. Check the link.");
-//   }
-// };
-const fetchAndUpdateGame = async (e) => {
-  e.preventDefault(); // stop form reload
-
-  try {
-    const response = await api("/AllGames/api/getGameFormLink", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Authorization: `Bearer ${localStorage.getItem("authToken")}`, // ✅ send token
-      },
-      body: JSON.stringify({ url: linkForUpdateGame, userName: username, admin:role }),
-    });
-
-    console.log("API Raw Response:", response);
-
-    if (response.success) {
-      // response.results = [{ game: "KUBER", status: "updated" }, ...]
-      setAllGamesformlink(response.results);
-
-      // ✅ show summary to user
-      const updated = response.results.filter((r) => r.status === "updated").length;
-      const skipped = response.results.length - updated;
-      alert(
-        `✅ ${updated} games updated, ❌ ${skipped} skipped (not owner or invalid results).`
-      );
-    } else {
-      alert("Failed: " + (response.error || "Unexpected error"));
-    }
-
-    setShowModal(false);
-    setLinkForUpdateGame("");
-  } catch (err) {
-    console.error("Error fetching games:", err);
-    alert("Failed to fetch or update games. Check the link.");
-  }
-};
-
-
-
-
   return (
     <div className="bg-warning border border-white m-1 p-3">
       <div className="bg-pink m-1 p-2 jodi-panel-container-second">
         <h3>WORLD ME SABSE FAST SATTA MATKA RESULT</h3>
-        <button
-          className="m-1 btn btn-lg btn-primary"
-          onClick={() => {
-            setModalType("add");
-            setShowModal(true);
-          }}
-          hidden={role !== "Admin"}
-        >
-          ADD GAME
-        </button>
-        <button
-          className="m-1 btn btn-lg btn-success"
-          onClick={() => {
-            setModalType("agent");
-            setShowModal(true);
-          }}
-          hidden={role !== "Admin"}
-        >
-          ADD AGENT
-        </button>
-        <button
-          className="m-1 btn btn-lg btn-danger"
-          onClick={() => {
-            setModalType("delete");
-            setShowModal(true);
-          }}
-          hidden={role !== "Admin"}
-        >
-          DELETE
-        </button>
-        <button
-          className="m-1 btn btn-lg btn-info"
-          onClick={() => {
-            setModalType("Import By Link");
-            setShowModal(true);
-          }}
-          hidden={role !== "Admin"}
-        >
-          Add Link to Edit
-        </button>
       </div>
 
       {games.map((item, index) => {
-        const now = new Date();
-
-        const parseTime = (timeStr) => {
-          if (!timeStr) return null;
-          const [time, modifier] = timeStr.split(" ");
-          let [hours, minutes] = time.split(":").map(Number);
-
-          if (modifier === "PM" && hours < 12) hours += 12;
-          if (modifier === "AM" && hours === 12) hours = 0;
-
-          const date = new Date();
-          date.setHours(hours, minutes, 0, 0);
-          return date;
-        };
-
-        const start = parseTime(item.startTime);
         let displayResult = "No numbers";
-
-        if (start) {
-          const diffInMs = start - now;
-          const diffInMinutes = diffInMs / (1000 * 60);
-
-          if (diffInMinutes <= 5 && diffInMinutes >= 0) {
-            displayResult = "Loading...";
-          } else if (
-            (Array.isArray(item.openNo) && item?.openNo.length > 0) ||
-            (Array.isArray(item.resultNo) && item?.resultNo.length > 0)
-          ) {
-            displayResult = <p>{getDisplayResult(item)}</p>;
-          }
+        if (
+          (Array.isArray(item.openNo) && item?.openNo.length > 0) ||
+          (Array.isArray(item.resultNo) && item?.resultNo.length > 0)
+        ) {
+          displayResult = <p>{getDisplayResult(item)}</p>;
         }
 
         return (
@@ -517,8 +243,35 @@ const fetchAndUpdateGame = async (e) => {
               Jodi
             </button>
             <div>
-              <h4>{item.name}</h4>
+              {/* ✅ Game name with adjustable font size */}
+              <h4 style={{ fontSize: `${nameSizes[item._id] || 18}px` }}>
+                {item.name}
+              </h4>
+
+              {/* ✅ Font size slider + save button */}
+              <input
+                type="range"
+                min="12"
+                max="40"
+                value={nameSizes[item._id] || 18}
+                onChange={(e) =>
+                  setNameSizes({
+                    ...nameSizes,
+                    [item._id]: Number(e.target.value),
+                  })
+                }
+              />
+              <span className="ml-2">{nameSizes[item._id] || 18}px</span>
+              <button
+                className="btn btn-success btn-sm ml-2"
+                onClick={() => handleSaveFontSize(item._id)}
+              >
+                Save
+              </button>
+
               <h5>{displayResult}</h5>
+
+              {/* ✅ Original EDIT button */}
               <button
                 className="btn btn-primary"
                 onClick={() => handleEditClick(item)}
@@ -531,6 +284,7 @@ const fetchAndUpdateGame = async (e) => {
               >
                 EDIT
               </button>
+
               <div className="timeStamp-for-jodi-panel">
                 <p>{item.startTime}</p>
                 <p>{item.endTime}</p>
@@ -546,227 +300,11 @@ const fetchAndUpdateGame = async (e) => {
         );
       })}
 
-      {/* --- MODALS (Add / Delete / Agent / Edit) --- */}
-      {showModal && (
-        <div className="AddGameModelMainContainer">
-          <div className="AddGameModelSeconContainer">
-            {modalType === "add" ? (
-              /* Add Game Form */
-              <>
-                <h4>Add New Game</h4>
-                <form onSubmit={handleAddGame}>
-                  <div className="form-group">
-                    <label htmlFor="gameName">Game Name</label>
-                    <input
-                      id="gameName"
-                      type="text"
-                      name="name"
-                      value={newGame.name}
-                      onChange={handleFormChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="owner">Owner</label>
-                    <input
-                      id="owner"
-                      type="text"
-                      name="owner"
-                      value={newGame.owner}
-                      onChange={handleFormChange}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="startTime">Start Time</label>
-                    <input
-                      id="startTime"
-                      type="time"
-                      name="startTime"
-                      value={newGame.startTime}
-                      onChange={handleFormChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="endTime">End Time</label>
-                    <input
-                      id="endTime"
-                      type="time"
-                      name="endTime"
-                      value={newGame.endTime}
-                      onChange={handleFormChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="resultNo">Result No</label>
-                    <input
-                      id="resultNo"
-                      type="text"
-                      name="resultNo"
-                      placeholder="e.g. 111-33-555"
-                      value={newGame.resultNo}
-                      onChange={handleFormChange}
-                    />
-                  </div>
-                  <div className="button-group">
-                    <button type="submit">Save</button>
-                    <button type="button" onClick={() => setShowModal(false)}>
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </>
-            ) : modalType === "delete" ? (
-              /* Delete Game Form */
-              <>
-                <h4>Delete Game</h4>
-                <form onSubmit={handleDeleteGame}>
-                  <div className="form-group">
-                    <label htmlFor="deleteGameName">Game Name</label>
-                    <input
-                      id="deleteGameName"
-                      type="text"
-                      value={deleteGameName}
-                      onChange={(e) => setDeleteGameName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="button-group">
-                    <button type="submit" className="btn btn-danger">
-                      Delete
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => setShowModal(false)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </>
-            ) : modalType === "Import By Link" ? (
-              /* Delete Game Form */
-              <>
-                <h4>Update the games thorw the Link</h4>
-                <form onSubmit={fetchAndUpdateGame}>
-                  <div className="form-group">
-                    <label htmlFor="deleteGameName">Provide the link</label>
-                    <input
-                      id="deleteGameName"
-                      type="text"
-                      value={linkForUpdateGame}
-                      onChange={(e) => setLinkForUpdateGame(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="button-group">
-                    <button type="submit" className="btn btn-danger">
-                      Done
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => setShowModal(false)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </>
-            ) : (
-              /* Add Agent Form */
-              <>
-                <h4>Add New Agent</h4>
-                <form onSubmit={handleAddAgent}>
-                  <div className="form-group">
-                    <label htmlFor="username">User Name</label>
-                    <input
-                      id="username"
-                      type="text"
-                      name="name"
-                      value={newAgent.name}
-                      onChange={handleAgentChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="mobile">Mobile No</label>
-                    <input
-                      id="mobile"
-                      type="text"
-                      name="mobile"
-                      value={newAgent.mobile}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, "");
-                        if (value.length <= 10) {
-                          handleAgentChange({
-                            target: { name: "mobile", value },
-                          });
-                        }
-                      }}
-                      maxLength="10"
-                      pattern="\d{10}"
-                      title="Enter a valid 10-digit mobile number"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="role">Role</label>
-                    <input
-                      id="role"
-                      type="text"
-                      name="role"
-                      value={newAgent.role}
-                      onChange={handleAgentChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="password">Password</label>
-                    <input
-                      id="password"
-                      type="password"
-                      name="password"
-                      value={newAgent.password}
-                      onChange={handleAgentChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="address">Address</label>
-                    <textarea
-                      id="address"
-                      name="address"
-                      value={newAgent.address}
-                      onChange={handleAgentChange}
-                      required
-                    />
-                  </div>
-                  <div className="button-group">
-                    <button type="submit" className="btn btn-success">
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => setShowModal(false)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Edit Modal */}
+      {/* ✅ Edit Modal for Results */}
       {showEditModal && (
         <div className="AddGameModelMainContainer">
           <div className="AddGameModelSeconContainer">
+            <h2>{nameForPop}</h2>
             <h4>Add Result Number</h4>
             <form onSubmit={handleUpdateGame}>
               <div className="form-group">
