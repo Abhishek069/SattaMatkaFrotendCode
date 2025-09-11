@@ -6,8 +6,8 @@ const DpBossPage = () => {
   const navigate = useNavigate()
 
   return (
-    <div className="dpboss-page">
-      <div className="section red">
+    <div className="dpboss-page" style={{ backgroundColor: "#ffcc99" }}>
+      {/* <div className="section red">
         <h2>Matka Jodi List</h2>
         <ul>
           <li>Matka Jodi Count Chart</li>
@@ -17,7 +17,7 @@ const DpBossPage = () => {
           <li>Penal Total Chart</li>
           <li>All 220 Card List</li>
         </ul>
-      </div>
+      </div> */}
 
       <div className="section data-block">
         <h3>
