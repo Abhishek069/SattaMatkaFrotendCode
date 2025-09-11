@@ -3,14 +3,34 @@ import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 
+// 🔹 Small component for blinking notification messages
+const BlinkingNotification = ({
+  messages,
+  interval = 3000,
+  color = "#ff0000",
+}) => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % messages.length);
+    }, interval);
+    return () => clearInterval(timer);
+  }, [messages, interval]);
+
+  return <h3 style={{ color }}>{messages[index]}</h3>;
+};
+
 export default function JodiPannelResultSection() {
   const token = localStorage.getItem("authToken");
 
   const [games, setGames] = useState([]);
+  const [input1, setInput1] = useState("");
+  const [input2, setInput2] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [nameForPop, setNameForPop] = useState("");
-  const [nameSizes, setNameSizes] = useState({}); // ✅ store font size per game
+  const [nameSizes, setNameSizes] = useState({});
 
   const [editGame, setEditGame] = useState({
     id: "",
@@ -23,6 +43,112 @@ export default function JodiPannelResultSection() {
   const [showLiveModal, setShowLiveModal] = useState(false);
   const [selectedGameId, setSelectedGameId] = useState(null);
   const [selectedTime, setSelectedTime] = useState("");
+  // 🔹 New state for Admin functions
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState("addGame");
+
+  const [newGame, setNewGame] = useState({
+    name: "",
+    owner: "",
+    resultNo: "111-11-111",
+    startTime: "",
+    endTime: "",
+    nameColor: "#000000", // default black
+    resultColor: "#000000", // default black
+    panelColor: "#000000", // default white
+    notificationColor: "#ff0000", // default red
+  });
+
+  const [newAgent, setNewAgent] = useState({
+    name: "",
+    mobile: "",
+    role: "",
+    password: "",
+    address: "",
+  });
+
+  const [deleteGameName, setDeleteGameName] = useState("");
+  const [linkForUpdateGame, setLinkForUpdateGame] = useState("");
+
+  // 🔹 Handlers
+  // const handleFormChange = (e) => {
+  //   setNewGame({ ...newGame, [e.target.name]: e.target.value });
+  // };
+
+  const handleAddGame = async (e) => {
+    e.preventDefault();
+    try {
+      await api("/AllGames/addGame", {
+        method: "POST",
+        body: JSON.stringify(newGame),
+      });
+      fetchGamesAgain();
+      setShowModal(false);
+      alert("Game added successfully!");
+      setNewGame({
+        name: "",
+        owner: "",
+        resultNo: "",
+        startTime: "",
+        endTime: "",
+        nameColor: "#000000",
+        resultColor: "#000000",
+        backgroundColor: "#ffffff",
+        notificationColor: "#ff0000",
+      });
+    } catch (err) {
+      console.error("Error adding game:", err);
+    }
+  };
+
+  const handleAddAgent = async (e) => {
+    e.preventDefault();
+    try {
+      await api("/user/addUser", {
+        method: "POST",
+        body: JSON.stringify(newAgent),
+      });
+      alert("Agent added successfully!");
+      setShowModal(false);
+    } catch (err) {
+      console.error("Error adding agent:", err);
+    }
+  };
+
+  const handleDeleteGame = async (e) => {
+    e.preventDefault();
+    try {
+      await api(`/AllGames/deleteGame/${deleteGameName}`, { method: "DELETE" });
+      fetchGamesAgain();
+      setShowModal(false);
+      alert("Game deleted successfully!");
+      setDeleteGameName("")
+    } catch (err) {
+      console.error("Error deleting game:", err);
+    }
+  };
+
+  const fetchAndUpdateGame = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await api("/AllGames/api/getGameFormLink", {
+        method: "POST",
+        body: JSON.stringify({
+          url: linkForUpdateGame,
+          userName: username,
+          admin: role,
+        }),
+      });
+      if (response.success) {
+        alert("Games updated successfully!");
+      } else {
+        alert("Failed: " + response.error);
+      }
+      setShowModal(false);
+    } catch (err) {
+      console.error("Error updating from link:", err);
+    }
+  };
 
   let username = null;
   let role = null;
@@ -45,7 +171,6 @@ export default function JodiPannelResultSection() {
       if (data.success) {
         setGames(data.data);
 
-        // ✅ preload font sizes from backend if available
         const sizes = {};
         data.data.forEach((game) => {
           sizes[game._id] = game.fontSize || 18;
@@ -68,7 +193,6 @@ export default function JodiPannelResultSection() {
   if (loading) return <div>Loading games...</div>;
   if (error) return <div>Error: {error}</div>;
 
-  // ✅ Save font size to backend
   const handleSaveFontSize = async (gameId) => {
     try {
       const response = await api(`/AllGames/saveFontSize/${gameId}`, {
@@ -106,70 +230,93 @@ export default function JodiPannelResultSection() {
 
   const handleUpdateGame = async (e) => {
     e.preventDefault();
-
     const gameId = editGame.id;
-    const inputValue = editGame.resultNo || "";
-    const parts = inputValue.split("-").map((num) => num.trim());
 
-    if (parts.length === 0 || !/^\d+$/.test(parts[0])) {
-      alert("Invalid format. Please enter a number like 123-7.");
-      return;
-    }
+    if (editGame.openOrClose !== "Add Notification") {
+      const inputValue = editGame.resultNo || "";
+      const parts = inputValue.split("-").map((num) => num.trim());
 
-    const mainNumber = parts[0];
-    const providedCheckDigit = parts[1];
-
-    // ✅ Rule 1: First digit must be smaller than second digit
-    if (mainNumber.length >= 2) {
-      const firstDigit = parseInt(mainNumber[0], 10);
-      const secondDigit = parseInt(mainNumber[1], 10);
-      if (firstDigit >= secondDigit) {
-        alert("Invalid number: first digit must be smaller than second digit.");
+      if (parts.length === 0 || !/^\d+$/.test(parts[0])) {
+        alert("Invalid format. Please enter a number like 123-7.");
         return;
       }
-    }
 
-    // ✅ Rule 2: Validate last 3 digit sum check
-    if (mainNumber.length >= 3) {
-      const lastThree = mainNumber.slice(-3).split("").map(Number);
-      const sum = lastThree.reduce((a, b) => a + b, 0);
-      const expectedCheckDigit = sum % 10;
+      const mainNumber = parts[0];
+      const providedCheckDigit = parts[1];
 
-      if (
-        providedCheckDigit &&
-        parseInt(providedCheckDigit, 10) !== expectedCheckDigit
-      ) {
-        alert(
-          `Invalid number: check digit should be ${expectedCheckDigit} (sum of last 3 digits).`
-        );
-        return;
+      if (mainNumber.length >= 2) {
+        const firstDigit = parseInt(mainNumber[0], 10);
+        const secondDigit = parseInt(mainNumber[1], 10);
+        if (firstDigit >= secondDigit) {
+          alert(
+            "Invalid number: first digit must be smaller than second digit."
+          );
+          return;
+        }
       }
-    }
 
-    const newResultArray = [mainNumber];
-    if (providedCheckDigit) newResultArray.push(providedCheckDigit);
+      if (mainNumber.length >= 3) {
+        const lastThree = mainNumber.slice(-3).split("").map(Number);
+        const sum = lastThree.reduce((a, b) => a + b, 0);
+        const expectedCheckDigit = sum % 10;
 
-    if (editGame.openOrClose) {
-      newResultArray.push(editGame.date);
-      newResultArray.push(editGame.openOrClose);
-      newResultArray.push(editGame.day);
-    }
-
-    try {
-      const updateData = await api(`/AllGames/updateGame/${gameId}`, {
-        method: "PUT",
-        body: JSON.stringify({ resultNo: newResultArray }),
-      });
-      if (updateData.success) {
-        fetchGamesAgain();
-        setShowEditModal(false);
-        alert("Game Number updated successfully!");
-      } else {
-        alert("Failed to update game: " + updateData.message);
+        if (
+          providedCheckDigit &&
+          parseInt(providedCheckDigit, 10) !== expectedCheckDigit
+        ) {
+          alert(
+            `Invalid number: check digit should be ${expectedCheckDigit} (sum of last 3 digits).`
+          );
+          return;
+        }
       }
-    } catch (err) {
-      console.error(err);
-      alert("Error updating game");
+
+      const newResultArray = [mainNumber];
+      if (providedCheckDigit) newResultArray.push(providedCheckDigit);
+
+      if (editGame.openOrClose) {
+        newResultArray.push(editGame.date);
+        newResultArray.push(editGame.openOrClose);
+        newResultArray.push(editGame.day);
+      }
+
+      try {
+        const updateData = await api(`/AllGames/updateGame/${gameId}`, {
+          method: "PUT",
+          body: JSON.stringify({ resultNo: newResultArray }),
+        });
+
+        if (updateData.success) {
+          fetchGamesAgain();
+          setShowEditModal(false);
+          alert("Game Number updated successfully!");
+        } else {
+          alert("Failed to update game: " + updateData.message);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error updating game");
+      }
+    } else if (editGame.openOrClose === "Add Notification") {
+      try {
+        const updateData = await api(`/AllGames/updateNotification/${gameId}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            notificationMessage: [input1 || "", input2 || ""],
+          }),
+        });
+
+        if (updateData.success) {
+          fetchGamesAgain();
+          setShowEditModal(false);
+          alert("Notification updated successfully!");
+        } else {
+          alert("Failed to update notification: " + updateData.message);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error updating notification");
+      }
     }
   };
 
@@ -219,10 +366,50 @@ export default function JodiPannelResultSection() {
   };
 
   return (
-    <div className="bg-warning border border-white m-1 p-3">
+    <div className=" border border-white m-1 p-3" style={{ backgroundColor: "#ffcc99" }}>
       <div className="bg-pink m-1 p-2 jodi-panel-container-second">
         <h3>WORLD ME SABSE FAST SATTA MATKA RESULT</h3>
       </div>
+      {role === "Admin" && (
+        <div className="mb-3">
+          <button
+            className="btn btn-primary m-1"
+            onClick={() => {
+              setModalType("addGame");
+              setShowModal(true);
+            }}
+          >
+            ADD GAME
+          </button>
+          <button
+            className="btn btn-secondary m-1"
+            onClick={() => {
+              setModalType("addAgent");
+              setShowModal(true);
+            }}
+          >
+            ADD AGENT
+          </button>
+          <button
+            className="btn btn-danger m-1"
+            onClick={() => {
+              setModalType("delete");
+              setShowModal(true);
+            }}
+          >
+            DELETE
+          </button>
+          <button
+            className="btn btn-info m-1"
+            onClick={() => {
+              setModalType("import");
+              setShowModal(true);
+            }}
+          >
+            Import By Link
+          </button>
+        </div>
+      )}
 
       {games.map((item, index) => {
         let displayResult = "No numbers";
@@ -230,13 +417,18 @@ export default function JodiPannelResultSection() {
           (Array.isArray(item.openNo) && item?.openNo.length > 0) ||
           (Array.isArray(item.resultNo) && item?.resultNo.length > 0)
         ) {
-          displayResult = <p>{getDisplayResult(item)}</p>;
+          displayResult = (
+            <p style={{ color: item.resultColor || "#000000" }}>
+              {getDisplayResult(item)}
+            </p>
+          );
         }
 
         return (
           <div
             className="jodi-panel-container jodi-panel-container-second"
             key={item._id || index}
+            style={{ backgroundColor: item.panelColor || "" }} // ✅ background color
           >
             <button
               className="btn btn-sm btn-primary button-jodi-panel"
@@ -245,15 +437,29 @@ export default function JodiPannelResultSection() {
               Jodi
             </button>
             <div>
-              {/* ✅ Game name with adjustable font size */}
               <div>
                 {role === "Admin" ? (
                   <>
-                    <h4 style={{ fontSize: `${nameSizes[item._id] || 18}px` }}>
+                    {/* ✅ Name color */}
+                    <h4
+                      style={{
+                        fontSize: `${nameSizes[item._id] || 18}px`,
+                        color: item.nameColor || "#000000",
+                      }}
+                    >
                       {item.name}
                     </h4>
 
-                    {/* ✅ Font size slider + save button */}
+                    {/* ✅ Blinking notification with custom color */}
+                    {Array.isArray(item.Notification_Message) &&
+                    item.Notification_Message.length > 0 ? (
+                      <BlinkingNotification
+                        messages={item.Notification_Message}
+                        interval={3000}
+                        color={item.notificationColor || "#ff0000"}
+                      />
+                    ) : null}
+
                     <input
                       type="range"
                       min="12"
@@ -275,37 +481,62 @@ export default function JodiPannelResultSection() {
                     </button>
                   </>
                 ) : (
-                  <h4>{item.name}</h4>
+                  <>
+                    <h4
+                      style={{
+                        fontSize: `${nameSizes[item._id] || 18}px`,
+                        color: item.nameColor || "#000000",
+                      }}
+                    >
+                      {item.name}
+                    </h4>
+                    {Array.isArray(item.Notification_Message) &&
+                    item.Notification_Message.length > 0 ? (
+                      <BlinkingNotification
+                        messages={item.Notification_Message}
+                        interval={3000}
+                        color={item.notificationColor || "#ff0000"}
+                      />
+                    ) : null}
+                  </>
                 )}
               </div>
 
-              <h5>{displayResult}</h5>
+              {/* ✅ Result text color applied */}
+              <h5 style={{ color: item.resultColor || "#000000" }}>
+                {displayResult}
+              </h5>
 
-              {/* ✅ Original EDIT button */}
               <div className="d-flex justify-content-around">
-              <button
-                className="btn btn-primary"
-                onClick={() => handleEditClick(item)}
-                hidden={
-                  !(
-                    role === "Admin" ||
-                    (role === "Agent" && item.owner === username)
-                  )
-                }
-              >
-                EDIT
-              </button>
-              <button
-                className="btn btn-info ml-2"
-                onClick={() => {
-                  setSelectedGameId(item._id);
-                  setShowLiveModal(true);
-                }}
+                <button
+                  className="btn btn-primary"
+                  onClick={() => handleEditClick(item)}
+                  hidden={
+                    !(
+                      role === "Admin" ||
+                      (role === "Agent" && item.owner === username)
+                    )
+                  }
                 >
-                Set Live Time
-              </button>
-                </div>
-            
+                  EDIT
+                </button>
+                <button
+                  className="btn btn-info ml-2"
+                  onClick={() => {
+                    setSelectedGameId(item._id);
+                    setShowLiveModal(true);
+                  }}
+                  hidden={
+                    !(
+                      role === "Admin" ||
+                      (role === "Agent" && item.owner === username)
+                    )
+                  }
+                >
+                  Set Live Time
+                </button>
+              </div>
+
               <div className="timeStamp-for-jodi-panel">
                 <p>{item.startTime}</p>
                 <p>{item.endTime}</p>
@@ -321,6 +552,236 @@ export default function JodiPannelResultSection() {
           </div>
         );
       })}
+
+      {showModal && (
+        <div className="AddGameModelMainContainer">
+          <div className="AddGameModelSeconContainer">
+            {modalType === "addGame" && (
+              <form onSubmit={handleAddGame}>
+                <h3>Add Game</h3>
+
+                {/* Game Name */}
+                <input
+                  name="name"
+                  placeholder="Game Name"
+                  value={newGame.name}
+                  onChange={(e) =>
+                    setNewGame({ ...newGame, name: e.target.value })
+                  }
+                  required
+                />
+
+                {/* Owner */}
+                <input
+                  name="owner"
+                  placeholder="Owner"
+                  value={newGame.owner}
+                  onChange={(e) =>
+                    setNewGame({ ...newGame, owner: e.target.value })
+                  }
+                />
+
+                {/* Start Time */}
+                <label>Start Time</label>
+                <input
+                  type="time"
+                  name="startTime"
+                  value={newGame.startTime}
+                  onChange={(e) =>
+                    setNewGame({ ...newGame, startTime: e.target.value })
+                  }
+                  required
+                />
+
+                {/* End Time */}
+                <label>End Time</label>
+                <input
+                  type="time"
+                  name="endTime"
+                  value={newGame.endTime}
+                  onChange={(e) =>
+                    setNewGame({ ...newGame, endTime: e.target.value })
+                  }
+                  required
+                />
+
+                {/* Result Number */}
+                <input
+                  name="resultNo"
+                  placeholder="Result No (e.g. 111-33-555)"
+                  value={newGame.resultNo}
+                  onChange={(e) =>
+                    setNewGame({ ...newGame, resultNo: e.target.value })
+                  }
+                />
+
+                {/* 🎨 Colors */}
+                <label>Game Name Color</label>
+                <input
+                  type="color"
+                  value={newGame.nameColor}
+                  onChange={(e) =>
+                    setNewGame({ ...newGame, nameColor: e.target.value })
+                  }
+                />
+
+                <label>Result Color</label>
+                <input
+                  type="color"
+                  value={newGame.resultColor}
+                  onChange={(e) =>
+                    setNewGame({ ...newGame, resultColor: e.target.value })
+                  }
+                />
+
+                
+                <label>Notification Color</label>
+                <input
+                  type="color"
+                  value={newGame.panelColor}
+                  onChange={(e) =>
+                    setNewGame({
+                      ...newGame,
+                      panelColor: e.target.value,
+                    })
+                  }
+                />
+
+                <label>Notification Color</label>
+                <input
+                  type="color"
+                  value={newGame.notificationColor}
+                  onChange={(e) =>
+                    setNewGame({
+                      ...newGame,
+                      notificationColor: e.target.value,
+                    })
+                  }
+                />
+
+                <div className="mt-2">
+                  <button type="submit" className="btn btn-success m-1">
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary ml-2 m-4"
+                    onClick={() => setShowModal(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {modalType === "addAgent" && (
+              <form onSubmit={handleAddAgent}>
+                <h3>Add Agent</h3>
+                <input
+                  name="name"
+                  placeholder="Name"
+                  value={newAgent.name}
+                  onChange={(e) =>
+                    setNewAgent({ ...newAgent, name: e.target.value })
+                  }
+                  required
+                />
+                <input
+                  name="mobile"
+                  placeholder="Mobile"
+                  value={newAgent.mobile}
+                  onChange={(e) =>
+                    setNewAgent({ ...newAgent, mobile: e.target.value })
+                  }
+                  required
+                />
+                <input
+                  name="password"
+                  placeholder="Password"
+                  type="password"
+                  value={newAgent.password}
+                  onChange={(e) =>
+                    setNewAgent({ ...newAgent, password: e.target.value })
+                  }
+                  required
+                />
+                <input
+                  name="role"
+                  placeholder="Role"
+                  value={newAgent.role}
+                  onChange={(e) =>
+                    setNewAgent({ ...newAgent, role: e.target.value })
+                  }
+                  required
+                />
+                <input
+                  name="address"
+                  placeholder="Address"
+                  value={newAgent.address}
+                  onChange={(e) =>
+                    setNewAgent({ ...newAgent, address: e.target.value })
+                  }
+                  required
+                />
+                <div className="mt-2">
+                  <button type="submit" className="btn btn-success m-1">
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary ml-2 m-4"
+                    onClick={() => setShowModal(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {modalType === "delete" && (
+              <form onSubmit={handleDeleteGame}>
+                <h3>Delete Game</h3>
+                <input
+                  placeholder="Game Name"
+                  value={deleteGameName}
+                  onChange={(e) => setDeleteGameName(e.target.value)}
+                />
+                <button type="submit" className="btn btn-danger">
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </button>
+              </form>
+            )}
+
+            {modalType === "import" && (
+              <form onSubmit={fetchAndUpdateGame}>
+                <h3>Import Games By Link</h3>
+                <input
+                  placeholder="Paste link here"
+                  value={linkForUpdateGame}
+                  onChange={(e) => setLinkForUpdateGame(e.target.value)}
+                />
+                <button type="submit" className="btn btn-info">
+                  Import
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowModal(false)}
+                >
+                  Cancel
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ✅ Edit Modal for Results */}
       {showLiveModal && (
@@ -390,10 +851,36 @@ export default function JodiPannelResultSection() {
                   <option value="">Select Open Close</option>
                   <option value="Open">Open</option>
                   <option value="Close">Close</option>
+                  <option value="Add Notification">Add Notification</option>
                 </select>
               </div>
-
-              {editGame.openOrClose && (
+              {editGame.openOrClose === "Add Notification" ? (
+                <div>
+                  <div className="d-flex flex-column justify-content-center">
+                    <label htmlFor="Notification-input-tag-1">
+                      Notification message 1
+                    </label>
+                    <input
+                      id="Notification-input-tag-1"
+                      name="Notification-input-tag-1"
+                      value={input1}
+                      onChange={(e) => setInput1(e.target.value)}
+                    />
+                  </div>
+                  <div className="d-flex flex-column justify-content-center m-1">
+                    <label htmlFor="Notification-input-tag-2">
+                      Notification message 2
+                    </label>
+                    <input
+                      id="Notification-input-tag-2"
+                      name="Notification-input-tag-2"
+                      value={input2}
+                      onChange={(e) => setInput2(e.target.value)}
+                    />
+                  </div>
+                </div>
+              ) : editGame.openOrClose === "Open" ||
+                editGame.openOrClose === "Close" ? (
                 <div className="form-group">
                   <label htmlFor="resultNo">Result No</label>
                   <input
@@ -407,8 +894,9 @@ export default function JodiPannelResultSection() {
                     required
                   />
                 </div>
+              ) : (
+                <div></div>
               )}
-
               <div className="button-group">
                 <button type="submit" className="btn btn-success">
                   Save

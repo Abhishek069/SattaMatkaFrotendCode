@@ -18,7 +18,7 @@ const HomePage = (props) => {
   
 
   return (
-    <div className="bg-danger border m-1 border-danger text-center py-2">
+    <div className="border m-1 border-danger text-center py-2" style={{ backgroundColor: "#ff2600ff" }}>
       <Header />
       <WelcomeBanner />
       <InfoSection />
