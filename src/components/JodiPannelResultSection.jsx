@@ -122,7 +122,7 @@ export default function JodiPannelResultSection() {
       fetchGamesAgain();
       setShowModal(false);
       alert("Game deleted successfully!");
-      setDeleteGameName("")
+      setDeleteGameName("");
     } catch (err) {
       console.error("Error deleting game:", err);
     }
@@ -228,97 +228,113 @@ export default function JodiPannelResultSection() {
     setNameForPop(game.name);
   };
 
-  const handleUpdateGame = async (e) => {
-    e.preventDefault();
-    const gameId = editGame.id;
+const handleUpdateGame = async (e) => {
+  e.preventDefault();
+  const gameId = editGame.id;
 
-    if (editGame.openOrClose !== "Add Notification") {
-      const inputValue = editGame.resultNo || "";
-      const parts = inputValue.split("-").map((num) => num.trim());
+  if (editGame.openOrClose === "Edit Color") {
+    // 🔹 Handle color update
+    try {
+      const updateData = await api(`/AllGames/updateColor/${gameId}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          nameColor: editGame.nameColor || "#000000",
+          resultColor: editGame.resultColor || "#000000",
+          panelColor: editGame.panelColor || "#ffffff",
+          notificationColor: editGame.notificationColor || "#ff0000",
+        }),
+      });
 
-      if (parts.length === 0 || !/^\d+$/.test(parts[0])) {
-        alert("Invalid format. Please enter a number like 123-7.");
+      if (updateData.success) {
+        fetchGamesAgain();
+        setShowEditModal(false);
+        alert("Game colors updated successfully!");
+      } else {
+        alert("Failed to update colors: " + updateData.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating colors");
+    }
+  } else if (editGame.openOrClose === "Add Notification") {
+    // 🔹 Handle notification update
+    try {
+      const updateData = await api(`/AllGames/updateNotification/${gameId}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          notificationMessage: [input1 || "", input2 || ""],
+        }),
+      });
+
+      if (updateData.success) {
+        fetchGamesAgain();
+        setShowEditModal(false);
+        alert("Notification updated successfully!");
+      } else {
+        alert("Failed to update notification: " + updateData.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating notification");
+    }
+  } else {
+    // 🔹 Handle Open/Close result number update
+    const inputValue = editGame.resultNo || "";
+    const parts = inputValue.split("-").map((num) => num.trim());
+
+    if (parts.length === 0 || !/^\d+$/.test(parts[0])) {
+      alert("Invalid format. Please enter a number like 123-7.");
+      return;
+    }
+
+    const mainNumber = parts[0];
+    const providedCheckDigit = parts[1];
+
+    if (mainNumber.length >= 2) {
+      const firstDigit = parseInt(mainNumber[0], 10);
+      const secondDigit = parseInt(mainNumber[1], 10);
+      if (firstDigit >= secondDigit) {
+        alert("Invalid number: first digit must be smaller than second digit.");
         return;
       }
+    }
 
-      const mainNumber = parts[0];
-      const providedCheckDigit = parts[1];
+    if (mainNumber.length >= 3) {
+      const lastThree = mainNumber.slice(-3).split("").map(Number);
+      const sum = lastThree.reduce((a, b) => a + b, 0);
+      const expectedCheckDigit = sum % 10;
 
-      if (mainNumber.length >= 2) {
-        const firstDigit = parseInt(mainNumber[0], 10);
-        const secondDigit = parseInt(mainNumber[1], 10);
-        if (firstDigit >= secondDigit) {
-          alert(
-            "Invalid number: first digit must be smaller than second digit."
-          );
-          return;
-        }
-      }
-
-      if (mainNumber.length >= 3) {
-        const lastThree = mainNumber.slice(-3).split("").map(Number);
-        const sum = lastThree.reduce((a, b) => a + b, 0);
-        const expectedCheckDigit = sum % 10;
-
-        if (
-          providedCheckDigit &&
-          parseInt(providedCheckDigit, 10) !== expectedCheckDigit
-        ) {
-          alert(
-            `Invalid number: check digit should be ${expectedCheckDigit} (sum of last 3 digits).`
-          );
-          return;
-        }
-      }
-
-      const newResultArray = [mainNumber];
-      if (providedCheckDigit) newResultArray.push(providedCheckDigit);
-
-      if (editGame.openOrClose) {
-        newResultArray.push(editGame.date);
-        newResultArray.push(editGame.openOrClose);
-        newResultArray.push(editGame.day);
-      }
-
-      try {
-        const updateData = await api(`/AllGames/updateGame/${gameId}`, {
-          method: "PUT",
-          body: JSON.stringify({ resultNo: newResultArray }),
-        });
-
-        if (updateData.success) {
-          fetchGamesAgain();
-          setShowEditModal(false);
-          alert("Game Number updated successfully!");
-        } else {
-          alert("Failed to update game: " + updateData.message);
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Error updating game");
-      }
-    } else if (editGame.openOrClose === "Add Notification") {
-      try {
-        const updateData = await api(`/AllGames/updateNotification/${gameId}`, {
-          method: "PUT",
-          body: JSON.stringify({
-            notificationMessage: [input1 || "", input2 || ""],
-          }),
-        });
-
-        if (updateData.success) {
-          fetchGamesAgain();
-          setShowEditModal(false);
-          alert("Notification updated successfully!");
-        } else {
-          alert("Failed to update notification: " + updateData.message);
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Error updating notification");
+      if (providedCheckDigit && parseInt(providedCheckDigit, 10) !== expectedCheckDigit) {
+        alert(`Invalid number: check digit should be ${expectedCheckDigit} (sum of last 3 digits).`);
+        return;
       }
     }
-  };
+
+    const newResultArray = [mainNumber];
+    if (providedCheckDigit) newResultArray.push(providedCheckDigit);
+    if (editGame.openOrClose) {
+      newResultArray.push(editGame.date, editGame.openOrClose, editGame.day);
+    }
+
+    try {
+      const updateData = await api(`/AllGames/updateGame/${gameId}`, {
+        method: "PUT",
+        body: JSON.stringify({ resultNo: newResultArray }),
+      });
+
+      if (updateData.success) {
+        fetchGamesAgain();
+        setShowEditModal(false);
+        alert("Game Number updated successfully!");
+      } else {
+        alert("Failed to update game: " + updateData.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating game");
+    }
+  }
+};
 
   const getDisplayResult = (item) => {
     const lastOpen =
@@ -366,7 +382,10 @@ export default function JodiPannelResultSection() {
   };
 
   return (
-    <div className=" border border-white m-1 p-3" style={{ backgroundColor: "#ffcc99" }}>
+    <div
+      className=" border border-white m-1 p-3"
+      style={{ backgroundColor: "#ffcc99" }}
+    >
       <div className="bg-pink m-1 p-2 jodi-panel-container-second">
         <h3>WORLD ME SABSE FAST SATTA MATKA RESULT</h3>
       </div>
@@ -426,7 +445,7 @@ export default function JodiPannelResultSection() {
 
         return (
           <div
-            className="jodi-panel-container jodi-panel-container-second"
+            className="jodi-panel-container jodi-panel-container-second m-2 p-2"
             key={item._id || index}
             style={{ backgroundColor: item.panelColor || "" }} // ✅ background color
           >
@@ -634,7 +653,6 @@ export default function JodiPannelResultSection() {
                   }
                 />
 
-                
                 <label>Notification Color</label>
                 <input
                   type="color"
@@ -839,7 +857,7 @@ export default function JodiPannelResultSection() {
             <h4>Add Result Number</h4>
             <form onSubmit={handleUpdateGame}>
               <div className="form-group">
-                <label htmlFor="openOrClose">Open / Close</label>
+                <label htmlFor="openOrClose">Open / Close / Edit Color</label>
                 <select
                   id="openOrClose"
                   value={editGame.openOrClose}
@@ -848,12 +866,14 @@ export default function JodiPannelResultSection() {
                   }
                   required
                 >
-                  <option value="">Select Open Close</option>
+                  <option value="">Select Action</option>
                   <option value="Open">Open</option>
                   <option value="Close">Close</option>
                   <option value="Add Notification">Add Notification</option>
+                  <option value="Edit Color">Edit Color</option>
                 </select>
               </div>
+
               {editGame.openOrClose === "Add Notification" ? (
                 <div>
                   <div className="d-flex flex-column justify-content-center">
@@ -894,9 +914,51 @@ export default function JodiPannelResultSection() {
                     required
                   />
                 </div>
+              ) : editGame.openOrClose === "Edit Color" ? (
+                <div className="form-group">
+                  <label>Game Name Color</label>
+                  <input
+                    type="color"
+                    value={editGame.nameColor || ""}
+                    onChange={(e) =>
+                      setEditGame({ ...editGame, nameColor: e.target.value })
+                    }
+                  />
+
+                  <label>Result Color</label>
+                  <input
+                    type="color"
+                    value={editGame.resultColor || ""}
+                    onChange={(e) =>
+                      setEditGame({ ...editGame, resultColor: e.target.value })
+                    }
+                  />
+
+                  <label>Panel Background Color</label>
+                  <input
+                    type="color"
+                    value={editGame.panelColor || ""}
+                    onChange={(e) =>
+                      setEditGame({ ...editGame, panelColor: e.target.value })
+                    }
+                  />
+
+                  <label>Notification Color</label>
+                  <input
+                    type="color"
+                    value={editGame.notificationColor || ""}
+                    onChange={(e) =>
+                      setEditGame({
+                        ...editGame,
+                        notificationColor: e.target.value,
+                      })
+                    }
+                  />
+                </div>
               ) : (
                 <div></div>
               )}
+
               <div className="button-group">
                 <button type="submit" className="btn btn-success">
                   Save
