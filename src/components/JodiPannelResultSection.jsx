@@ -526,6 +526,12 @@ export default function JodiPannelResultSection() {
                     setSelectedGameId(item._id);
                     setShowLiveModal(true);
                   }}
+                  hidden={
+                    !(
+                      role === "Admin" ||
+                      (role === "Agent" && item.owner === username)
+                    )
+                  }
                 >
                   Set Live Time
                 </button>
