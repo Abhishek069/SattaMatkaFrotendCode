@@ -116,6 +116,7 @@
   justify-content: space-between;
   border: solid 1px white;
   align-items: center;
+  /* width: 100%; */
 }
 
 .button-jodi-panel{
@@ -413,3 +414,4 @@
 .matka-table .red {
   color: red;
 }
+

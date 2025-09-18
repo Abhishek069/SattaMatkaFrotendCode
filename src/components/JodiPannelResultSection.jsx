@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
+import "./Comman.css";
 
 // 🔹 Small component for blinking notification messages
-const BlinkingNotification = ({
+// 🔹 Small component for scrolling notification messages
+const ScrollingNotification = ({
   messages,
   interval = 3000,
   color = "#ff0000",
+  speed = 10, // seconds for one full scroll
 }) => {
   const [index, setIndex] = useState(0);
 
@@ -18,7 +21,35 @@ const BlinkingNotification = ({
     return () => clearInterval(timer);
   }, [messages, interval]);
 
-  return <h3 style={{ color }}>{messages[index]}</h3>;
+  if (!messages || messages.length === 0) return null;
+
+  return (
+    <div
+      style={{
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        width: "100%",
+      }}
+    >
+      <div
+        style={{
+          display: "inline-block",
+          paddingLeft: "100%",
+          color,
+          animation: `scroll ${speed}s linear infinite`,
+        }}
+      >
+        {messages[index]}
+      </div>
+
+      <style>{`
+        @keyframes scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-100%); }
+        }
+      `}</style>
+    </div>
+  );
 };
 
 export default function JodiPannelResultSection() {
@@ -55,7 +86,7 @@ export default function JodiPannelResultSection() {
     endTime: "",
     nameColor: "#000000", // default black
     resultColor: "#000000", // default black
-    panelColor: "#000000", // default white
+    panelColor: "#ffcb99", // default white
     notificationColor: "#ff0000", // default red
   });
 
@@ -93,7 +124,7 @@ export default function JodiPannelResultSection() {
         endTime: "",
         nameColor: "#000000",
         resultColor: "#000000",
-        backgroundColor: "#ffffff",
+        backgroundColor: "#ffcb99",
         notificationColor: "#ff0000",
       });
     } catch (err) {
@@ -122,7 +153,7 @@ export default function JodiPannelResultSection() {
       fetchGamesAgain();
       setShowModal(false);
       alert("Game deleted successfully!");
-      setDeleteGameName("")
+      setDeleteGameName("");
     } catch (err) {
       console.error("Error deleting game:", err);
     }
@@ -232,7 +263,53 @@ export default function JodiPannelResultSection() {
     e.preventDefault();
     const gameId = editGame.id;
 
-    if (editGame.openOrClose !== "Add Notification") {
+    if (editGame.openOrClose === "Edit Color") {
+      // 🔹 Handle color update
+      try {
+        const updateData = await api(`/AllGames/updateColor/${gameId}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            nameColor: editGame.nameColor || "#000000",
+            resultColor: editGame.resultColor || "#000000",
+            panelColor: editGame.panelColor || "#ffcb99",
+            notificationColor: editGame.notificationColor || "#ff0000",
+          }),
+        });
+
+        if (updateData.success) {
+          fetchGamesAgain();
+          setShowEditModal(false);
+          alert("Game colors updated successfully!");
+        } else {
+          alert("Failed to update colors: " + updateData.message);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error updating colors");
+      }
+    } else if (editGame.openOrClose === "Add Notification") {
+      // 🔹 Handle notification update
+      try {
+        const updateData = await api(`/AllGames/updateNotification/${gameId}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            notificationMessage: [input1 || "", input2 || ""],
+          }),
+        });
+
+        if (updateData.success) {
+          fetchGamesAgain();
+          setShowEditModal(false);
+          alert("Notification updated successfully!");
+        } else {
+          alert("Failed to update notification: " + updateData.message);
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error updating notification");
+      }
+    } else {
+      // 🔹 Handle Open/Close result number update
       const inputValue = editGame.resultNo || "";
       const parts = inputValue.split("-").map((num) => num.trim());
 
@@ -273,11 +350,8 @@ export default function JodiPannelResultSection() {
 
       const newResultArray = [mainNumber];
       if (providedCheckDigit) newResultArray.push(providedCheckDigit);
-
       if (editGame.openOrClose) {
-        newResultArray.push(editGame.date);
-        newResultArray.push(editGame.openOrClose);
-        newResultArray.push(editGame.day);
+        newResultArray.push(editGame.date, editGame.openOrClose, editGame.day);
       }
 
       try {
@@ -296,26 +370,6 @@ export default function JodiPannelResultSection() {
       } catch (err) {
         console.error(err);
         alert("Error updating game");
-      }
-    } else if (editGame.openOrClose === "Add Notification") {
-      try {
-        const updateData = await api(`/AllGames/updateNotification/${gameId}`, {
-          method: "PUT",
-          body: JSON.stringify({
-            notificationMessage: [input1 || "", input2 || ""],
-          }),
-        });
-
-        if (updateData.success) {
-          fetchGamesAgain();
-          setShowEditModal(false);
-          alert("Notification updated successfully!");
-        } else {
-          alert("Failed to update notification: " + updateData.message);
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Error updating notification");
       }
     }
   };
@@ -366,7 +420,10 @@ export default function JodiPannelResultSection() {
   };
 
   return (
-    <div className=" border border-white m-1 p-3" style={{ backgroundColor: "#ffcc99" }}>
+    <div
+      className=" border border-white m-1 p-3"
+      style={{ backgroundColor: "#ffcc99" }}
+    >
       <div className="bg-pink m-1 p-2 jodi-panel-container-second">
         <h3>WORLD ME SABSE FAST SATTA MATKA RESULT</h3>
       </div>
@@ -426,15 +483,23 @@ export default function JodiPannelResultSection() {
 
         return (
           <div
-            className="jodi-panel-container jodi-panel-container-second"
+            className="jodi-panel-container jodi-panel-container-second m-2 p-2"
             key={item._id || index}
             style={{ backgroundColor: item.panelColor || "" }} // ✅ background color
           >
             <button
               className="btn btn-sm btn-primary button-jodi-panel"
+              style={{
+                writingMode: "vertical-rl",
+                textOrientation: "upright",
+                height: "130px", // make it tall
+                width: "40px", // make it narrow
+                textAlign: "center",
+                padding: "5px",
+              }}
               onClick={() => handlePageChange(item)}
             >
-              Jodi
+              Record
             </button>
             <div>
               <div>
@@ -453,10 +518,11 @@ export default function JodiPannelResultSection() {
                     {/* ✅ Blinking notification with custom color */}
                     {Array.isArray(item.Notification_Message) &&
                     item.Notification_Message.length > 0 ? (
-                      <BlinkingNotification
+                      <ScrollingNotification
                         messages={item.Notification_Message}
-                        interval={3000}
+                        interval={6000}
                         color={item.notificationColor || "#ff0000"}
+                        speed={10} // you can adjust this
                       />
                     ) : null}
 
@@ -517,6 +583,7 @@ export default function JodiPannelResultSection() {
                       (role === "Agent" && item.owner === username)
                     )
                   }
+                  disabled={new Date(item.valid_date).getTime() < Date.now()}
                 >
                   EDIT
                 </button>
@@ -532,6 +599,7 @@ export default function JodiPannelResultSection() {
                       (role === "Agent" && item.owner === username)
                     )
                   }
+                  disabled={new Date(item.valid_date).getTime() < Date.now()}
                 >
                   Set Live Time
                 </button>
@@ -545,9 +613,17 @@ export default function JodiPannelResultSection() {
 
             <button
               onClick={() => handlePageChange(item, "panel")}
+              style={{
+                writingMode: "vertical-rl",
+                textOrientation: "upright",
+                height: "130px", // make it tall
+                width: "40px", // make it narrow
+                textAlign: "center",
+                padding: "5px",
+              }}
               className="btn btn-sm btn-primary button-jodi-panel"
             >
-              Panel
+              Record
             </button>
           </div>
         );
@@ -634,8 +710,7 @@ export default function JodiPannelResultSection() {
                   }
                 />
 
-                
-                <label>Notification Color</label>
+                <label>Panel Color</label>
                 <input
                   type="color"
                   value={newGame.panelColor}
@@ -741,11 +816,19 @@ export default function JodiPannelResultSection() {
             {modalType === "delete" && (
               <form onSubmit={handleDeleteGame}>
                 <h3>Delete Game</h3>
-                <input
-                  placeholder="Game Name"
+                <select
+                  className="form-control"
                   value={deleteGameName}
                   onChange={(e) => setDeleteGameName(e.target.value)}
-                />
+                  required
+                >
+                  <option value="">-- Select a game to delete --</option>
+                  {games.map((game) => (
+                    <option key={game._id} value={game.name}>
+                      {game.name}
+                    </option>
+                  ))}
+                </select>
                 <button type="submit" className="btn btn-danger">
                   Delete
                 </button>
@@ -839,7 +922,7 @@ export default function JodiPannelResultSection() {
             <h4>Add Result Number</h4>
             <form onSubmit={handleUpdateGame}>
               <div className="form-group">
-                <label htmlFor="openOrClose">Open / Close</label>
+                <label htmlFor="openOrClose">Open / Close / Edit Color</label>
                 <select
                   id="openOrClose"
                   value={editGame.openOrClose}
@@ -848,12 +931,14 @@ export default function JodiPannelResultSection() {
                   }
                   required
                 >
-                  <option value="">Select Open Close</option>
+                  <option value="">Select Action</option>
                   <option value="Open">Open</option>
                   <option value="Close">Close</option>
                   <option value="Add Notification">Add Notification</option>
+                  <option value="Edit Color">Edit Color</option>
                 </select>
               </div>
+
               {editGame.openOrClose === "Add Notification" ? (
                 <div>
                   <div className="d-flex flex-column justify-content-center">
@@ -894,9 +979,51 @@ export default function JodiPannelResultSection() {
                     required
                   />
                 </div>
+              ) : editGame.openOrClose === "Edit Color" ? (
+                <div className="form-group">
+                  <label>Game Name Color</label>
+                  <input
+                    type="color"
+                    value={editGame.nameColor || ""}
+                    onChange={(e) =>
+                      setEditGame({ ...editGame, nameColor: e.target.value })
+                    }
+                  />
+
+                  <label>Result Color</label>
+                  <input
+                    type="color"
+                    value={editGame.resultColor || ""}
+                    onChange={(e) =>
+                      setEditGame({ ...editGame, resultColor: e.target.value })
+                    }
+                  />
+
+                  <label>Panel Background Color</label>
+                  <input
+                    type="color"
+                    value={editGame.panelColor || ""}
+                    onChange={(e) =>
+                      setEditGame({ ...editGame, panelColor: e.target.value })
+                    }
+                  />
+
+                  <label>Notification Color</label>
+                  <input
+                    type="color"
+                    value={editGame.notificationColor || ""}
+                    onChange={(e) =>
+                      setEditGame({
+                        ...editGame,
+                        notificationColor: e.target.value,
+                      })
+                    }
+                  />
+                </div>
               ) : (
                 <div></div>
               )}
+
               <div className="button-group">
                 <button type="submit" className="btn btn-success">
                   Save
