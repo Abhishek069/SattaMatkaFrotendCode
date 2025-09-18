@@ -750,7 +750,7 @@ export default function JodiPannelResultSection() {
             )}
 
             {modalType === "addAgent" && (
-              <form onSubmit={handleAddAgent}>
+              <form onSubmit={handleAddAgent} className="overflow-auto">
                 <h3>Add Agent</h3>
                 <input
                   name="name"
@@ -814,7 +814,7 @@ export default function JodiPannelResultSection() {
             )}
 
             {modalType === "delete" && (
-              <form onSubmit={handleDeleteGame}>
+              <form onSubmit={handleDeleteGame} className="over">
                 <h3>Delete Game</h3>
                 <select
                   className="form-control"
@@ -868,7 +868,7 @@ export default function JodiPannelResultSection() {
 
       {/* ✅ Edit Modal for Results */}
       {showLiveModal && (
-        <div className="AddGameModelMainContainer">
+        <div className="AddGameModelMainContainer overflow-auto" >
           <div className="AddGameModelSeconContainer">
             <h4>Set Live Time</h4>
             <input
@@ -916,7 +916,7 @@ export default function JodiPannelResultSection() {
       )}
 
       {showEditModal && (
-        <div className="AddGameModelMainContainer">
+        <div className="AddGameModelMainContainer overflow-auto">
           <div className="AddGameModelSeconContainer">
             <h2>{nameForPop}</h2>
             <h4>Add Result Number</h4>
