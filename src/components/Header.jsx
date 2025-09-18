@@ -1,8 +1,8 @@
 import React from "react";
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
-  const navigate =  useNavigate()
+  // const navigate =  useNavigate()
   return (
     <header
       className="m-1 border border-white py-3"

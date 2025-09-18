@@ -11,10 +11,13 @@ import MatkaDivisionName from '../components/MatakaDivisionName';
 import StarlStarlineSectionineTable from '../components/StarlineSection'
 import MainBombay36Bazar from '../components/MainBombay36Bazar'
 import DpBossPage from '../components/DpBossPage'
+import UserPayments from '../components/AgentList'
 
 const HomePage = (props) => {
 
   const {setGameTitle} = props
+
+  const role = localStorage.getItem("userRole")
   
 
   return (
@@ -22,6 +25,10 @@ const HomePage = (props) => {
       <Header />
       <WelcomeBanner />
       <InfoSection />
+      {
+        role==="Admin" ?
+        <UserPayments/>:""
+      }
       <LuckyNumberSection />
       <LiveResultSection />
       <NoticeSection/>
