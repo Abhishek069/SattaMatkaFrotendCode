@@ -1,8 +1,9 @@
 import React from "react";
-// import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+
 
 const Header = () => {
-  // const navigate =  useNavigate()
+  const navigate =  useNavigate()
   return (
     <header
       className="m-1 border border-white py-3"
@@ -22,10 +23,9 @@ const Header = () => {
         >
           <span className="text-pink">Satta Matka </span>Aajj Tak
         </h1>
-
         {/* Login Button */}
         <div style={{ flex: 1, textAlign: "right" }}>
-          <button className="btn btn-primary">Login</button>
+          <button className="btn btn-primary" onClick={()=>{navigate('/login')}}>Login</button>
         </div>
       </div>
     </header>

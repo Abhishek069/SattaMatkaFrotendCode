@@ -133,18 +133,39 @@ export default function JodiPannelResultSection() {
   };
 
   const handleAddAgent = async (e) => {
-    e.preventDefault();
-    try {
-      await api("/user/addUser", {
-        method: "POST",
-        body: JSON.stringify(newAgent),
-      });
-      alert("Agent added successfully!");
-      setShowModal(false);
-    } catch (err) {
-      console.error("Error adding agent:", err);
+  e.preventDefault();
+  try {
+    const res = await api("/user/addUser", {
+      method: "POST",
+      body: JSON.stringify(newAgent),
+    });
+
+    // If backend sends success:false
+    if (!res.success) {
+      alert(res.message || res.error || "Failed to add agent");
+      return;
     }
-  };
+
+    alert("Agent added successfully!");
+    setShowModal(false);
+    console.log("by");
+    
+  } catch (err) {
+    console.error("Error adding agent:", err);
+    console.log(err.response);
+    
+    // If err.response contains backend error (depends on your api wrapper)
+    if (err.response) {
+      const errorData = await err.response.json();
+      
+      alert(errorData.message || errorData.error || "Something went wrong!");
+    } else {
+      console.log("ig");
+      alert(err.message || "Something went wrong!");
+    }
+  }
+};
+
 
   const handleDeleteGame = async (e) => {
     e.preventDefault();
@@ -312,8 +333,15 @@ export default function JodiPannelResultSection() {
       // 🔹 Handle Open/Close result number update
       const inputValue = editGame.resultNo || "";
       const parts = inputValue.split("-").map((num) => num.trim());
-
-      if (parts.length === 0 || !/^\d+$/.test(parts[0])) {
+      console.log(parts,parts[0].length === 3);
+      
+      console.log(!inputValue.includes("-"))
+      
+      if (inputValue.length === 5 && parts[0].length !== 3 && !inputValue.includes("-")) {
+        alert("Invalid format. Please enter a number like 123-7.");
+        return;
+      }
+      if ((parts.length === 0 || !/^\d+$/.test(parts[0]))) {
         alert("Invalid format. Please enter a number like 123-7.");
         return;
       }
@@ -334,9 +362,16 @@ export default function JodiPannelResultSection() {
 
       if (mainNumber.length >= 3) {
         const lastThree = mainNumber.slice(-3).split("").map(Number);
+        console.log(lastThree);
+        
         const sum = lastThree.reduce((a, b) => a + b, 0);
+        console.log(sum);
+        
         const expectedCheckDigit = sum % 10;
-
+        console.log(expectedCheckDigit);
+        console.log();
+        
+        
         if (
           providedCheckDigit &&
           parseInt(providedCheckDigit, 10) !== expectedCheckDigit
@@ -375,6 +410,7 @@ export default function JodiPannelResultSection() {
   };
 
   const getDisplayResult = (item) => {
+    // console.log(item);
     const lastOpen =
       Array.isArray(item.openNo) && item.openNo.length > 0
         ? item.openNo[item.openNo.length - 1]
@@ -490,10 +526,8 @@ export default function JodiPannelResultSection() {
             <button
               className="btn btn-sm btn-primary button-jodi-panel"
               style={{
-                writingMode: "vertical-rl",
-                textOrientation: "upright",
-                height: "130px", // make it tall
-                width: "40px", // make it narrow
+                height: "40px", // make it tall
+                width: "130px", // make it narrow
                 textAlign: "center",
                 padding: "5px",
               }}
@@ -558,7 +592,7 @@ export default function JodiPannelResultSection() {
                     </h4>
                     {Array.isArray(item.Notification_Message) &&
                     item.Notification_Message.length > 0 ? (
-                      <BlinkingNotification
+                      <ScrollingNotification
                         messages={item.Notification_Message}
                         interval={3000}
                         color={item.notificationColor || "#ff0000"}
@@ -614,10 +648,8 @@ export default function JodiPannelResultSection() {
             <button
               onClick={() => handlePageChange(item, "panel")}
               style={{
-                writingMode: "vertical-rl",
-                textOrientation: "upright",
-                height: "130px", // make it tall
-                width: "40px", // make it narrow
+                height: "40px", // make it tall
+                width: "130px", // make it narrow
                 textAlign: "center",
                 padding: "5px",
               }}
@@ -872,7 +904,7 @@ export default function JodiPannelResultSection() {
           <div className="AddGameModelSeconContainer">
             <h4>Set Live Time</h4>
             <input
-              type="datetime-local"
+              type="number"
               value={selectedTime}
               onChange={(e) => setSelectedTime(e.target.value)}
             />
@@ -901,7 +933,7 @@ export default function JodiPannelResultSection() {
                     alert("Error setting live time");
                   }
                 }}
-              >
+              > 
                 Save
               </button>
               <button
