@@ -12,9 +12,29 @@ const LiveResultSection = () => {
       try {
         const data = await api("/AllGames/latest-updates");
 
-        // Validate response shape
         if (data && data.hasData && Array.isArray(data.data)) {
           const formatted = data.data.map((game) => {
+            const now = new Date();
+
+            // ✅ Handle startTime in "HH:mm" format
+            let startTime = null;
+            if (game.startTime) {
+              const [hours, minutes] = game.startTime.split(":").map(Number);
+              startTime = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate(),
+                hours,
+                minutes,
+                0
+              );
+            }
+
+            // ✅ If no startTime or still before 10min window → Loading
+            if (startTime >= now <= new Date(startTime.getTime() - 10 * 60 * 1000)) {
+              return { title: game.name, numbers: "Loading..." };
+            }
+
             const lastOpen = game.openNo?.length
               ? game.openNo[game.openNo.length - 1]
               : null;
@@ -39,19 +59,16 @@ const LiveResultSection = () => {
             let lastResult = "N/A";
 
             if (lastOpen && lastClose && openDay === closeDay) {
-              // ✅ Same day → combine
               lastResult = `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
             } else if (
               lastOpen &&
               (!lastClose || new Date(openTime) > new Date(closeTime))
             ) {
-              // ✅ Only open or newer open
               lastResult = `${openMain}-${openDigit}`;
             } else if (
               lastClose &&
               (!lastOpen || new Date(closeTime) > new Date(openTime))
             ) {
-              // ✅ Only close or newer close
               lastResult = `${closeMain}-${closeDigit}`;
             }
 
@@ -60,7 +77,7 @@ const LiveResultSection = () => {
 
           setResults(formatted);
         } else {
-          setResults([]); // invalid or empty response
+          setResults([]);
         }
       } catch (err) {
         console.error("Error fetching live results:", err);
