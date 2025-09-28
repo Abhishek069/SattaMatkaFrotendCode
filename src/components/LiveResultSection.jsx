@@ -10,7 +10,8 @@ const LiveResultSection = () => {
     const fetchResults = async () => {
       try {
         const data = await api("/AllGames/latest-updates");
-        if(data.hasData){
+        console.log(data.hasData && Array.isArray(data.data))
+        if(data.hasData && Array.isArray(data.data)){
           const formatted = data.data?.map((game) => {
           const lastOpen = game.openNo?.length
             ? game.openNo[game.openNo.length - 1]

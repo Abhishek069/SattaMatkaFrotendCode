@@ -643,11 +643,7 @@ export default function JodiPannelResultSection() {
               <h5 style={{ color: item.resultColor || "#000000" }}>
                 {displayResult}
               </h5>
-              <div className="d-flex justify-content-center gap-3">
-                <p className="mb-0">{item.startTime}</p>
-                <p className="mb-0">{item.endTime}</p>
-              </div>
-
+              
               {/* Action Buttons (Edit/Live Time) - Refactored */}
               <div className="d-flex justify-content-center mt-3 gap-2">
                 {" "}
