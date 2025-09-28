@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
-import { useNavigate } from "react-router-dom";
+import { Await, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import "./Comman.css";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // 🔹 Small component for blinking notification messages
 // 🔹 Small component for scrolling notification messages
@@ -57,6 +59,7 @@ export default function JodiPannelResultSection() {
 
   const [games, setGames] = useState([]);
   const [input1, setInput1] = useState("");
+  const [allUser, setAllUser] = useState([]);
   const [input2, setInput2] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -100,6 +103,7 @@ export default function JodiPannelResultSection() {
 
   const [deleteGameName, setDeleteGameName] = useState("");
   const [linkForUpdateGame, setLinkForUpdateGame] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState()
 
   // 🔹 Handlers
   // const handleFormChange = (e) => {
@@ -109,74 +113,105 @@ export default function JodiPannelResultSection() {
   const handleAddGame = async (e) => {
     e.preventDefault();
     try {
-      await api("/AllGames/addGame", {
+      const res = await api("/AllGames/addGame", {
         method: "POST",
         body: JSON.stringify(newGame),
       });
-      fetchGamesAgain();
-      setShowModal(false);
-      alert("Game added successfully!");
-      setNewGame({
-        name: "",
-        owner: "",
-        resultNo: "",
-        startTime: "",
-        endTime: "",
-        nameColor: "#000000",
-        resultColor: "#000000",
-        backgroundColor: "#ffcb99",
-        notificationColor: "#ff0000",
-      });
+      if (res.success) {
+        toast.success("Game added successfully!");
+        setShowModal(false);
+        fetchGamesAgain();
+        setNewGame({
+          name: "",
+          owner: "",
+          resultNo: "",
+          startTime: "",
+          endTime: "",
+          nameColor: "#000000",
+          resultColor: "#000000",
+          backgroundColor: "#ffcb99",
+          notificationColor: "#ff0000",
+        });
+      } else {
+        toast.success(res.error);
+      }
     } catch (err) {
       console.error("Error adding game:", err);
     }
   };
 
+  const collectAllUser = async () => {
+    try {
+      const res = await api("/user/");
+      setAllUser(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
   const handleAddAgent = async (e) => {
-  e.preventDefault();
-  try {
-    const res = await api("/user/addUser", {
-      method: "POST",
-      body: JSON.stringify(newAgent),
-    });
+    e.preventDefault();
+    try {
+      const res = await api("/user/addUser", {
+        method: "POST",
+        body: JSON.stringify(newAgent),
+      });
 
-    // If backend sends success:false
-    if (!res.success) {
-      alert(res.message || res.error || "Failed to add agent");
-      return;
+      // If backend sends success:false
+      if (!res.success) {
+        toast.error(res.message || res.error || "Failed to add agent");
+        return;
+      }
+
+      toast.success("Agent added successfully!");
+      setShowModal(false);
+    } catch (err) {
+      console.error("Error adding agent:", err);
+      console.log(err.response);
+
+      // If err.response contains backend error (depends on your api wrapper)
+      if (err.response) {
+        const errorData = await err.response.json();
+
+        toast.error(
+          errorData.message || errorData.error || "Something went wrong!"
+        );
+      } else {
+        console.log("ig");
+        toast.error(err.message || "Something went wrong!");
+      }
     }
-
-    alert("Agent added successfully!");
-    setShowModal(false);
-    console.log("by");
-    
-  } catch (err) {
-    console.error("Error adding agent:", err);
-    console.log(err.response);
-    
-    // If err.response contains backend error (depends on your api wrapper)
-    if (err.response) {
-      const errorData = await err.response.json();
-      
-      alert(errorData.message || errorData.error || "Something went wrong!");
-    } else {
-      console.log("ig");
-      alert(err.message || "Something went wrong!");
-    }
-  }
-};
-
+  };
 
   const handleDeleteGame = async (e) => {
     e.preventDefault();
     try {
       await api(`/AllGames/deleteGame/${deleteGameName}`, { method: "DELETE" });
-      fetchGamesAgain();
+      toast.success("Game deleted successfully!");
       setShowModal(false);
-      alert("Game deleted successfully!");
+      fetchGamesAgain();
       setDeleteGameName("");
     } catch (err) {
       console.error("Error deleting game:", err);
+    }
+  };
+
+  const handleSetActiveInactive = async (e, gameId, newStatus) => {
+    e.preventDefault();
+    try {
+      await api(`/AllGames/updateGame/${gameId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      toast.success(`Game status updated to ${newStatus}!`);
+      setShowModal(false);
+      fetchGamesAgain();
+    } catch (err) {
+      console.error("Error updating game status:", err);
+      toast.error("Failed to update game status");
     }
   };
 
@@ -192,9 +227,9 @@ export default function JodiPannelResultSection() {
         }),
       });
       if (response.success) {
-        alert("Games updated successfully!");
+        toast.success("Games updated successfully!");
       } else {
-        alert("Failed: " + response.error);
+        toast.error("Failed: " + response.error);
       }
       setShowModal(false);
     } catch (err) {
@@ -240,6 +275,7 @@ export default function JodiPannelResultSection() {
 
   useEffect(() => {
     fetchGamesAgain();
+    collectAllUser();
   }, []);
 
   if (loading) return <div>Loading games...</div>;
@@ -253,13 +289,13 @@ export default function JodiPannelResultSection() {
       });
 
       if (response.success) {
-        alert("Font size saved successfully!");
+        toast.success("Font size saved successfully!");
       } else {
-        alert("Failed to save font size: " + response.message);
+        toast.error("Failed to save font size: " + response.message);
       }
     } catch (err) {
       console.error(err);
-      alert("Error saving font size");
+      toast.error("Error saving font size");
     }
   };
 
@@ -300,13 +336,13 @@ export default function JodiPannelResultSection() {
         if (updateData.success) {
           fetchGamesAgain();
           setShowEditModal(false);
-          alert("Game colors updated successfully!");
+          toast.success("Game colors updated successfully!");
         } else {
-          alert("Failed to update colors: " + updateData.message);
+          toast.error("Failed to update colors: " + updateData.message);
         }
       } catch (err) {
         console.error(err);
-        alert("Error updating colors");
+        toast.error("Error updating colors");
       }
     } else if (editGame.openOrClose === "Add Notification") {
       // 🔹 Handle notification update
@@ -319,30 +355,30 @@ export default function JodiPannelResultSection() {
         });
 
         if (updateData.success) {
-          fetchGamesAgain();
+          toast.success("Notification updated successfully!");
           setShowEditModal(false);
-          alert("Notification updated successfully!");
+          fetchGamesAgain();
         } else {
-          alert("Failed to update notification: " + updateData.message);
+          toast.error("Failed to update notification: " + updateData.message);
         }
       } catch (err) {
         console.error(err);
-        alert("Error updating notification");
+        toast.error("Error updating notification");
       }
     } else {
       // 🔹 Handle Open/Close result number update
       const inputValue = editGame.resultNo || "";
       const parts = inputValue.split("-").map((num) => num.trim());
-      console.log(parts,parts[0].length === 3);
-      
-      console.log(!inputValue.includes("-"))
-      
-      if (inputValue.length === 5 && parts[0].length !== 3 && !inputValue.includes("-")) {
-        alert("Invalid format. Please enter a number like 123-7.");
+      if (
+        inputValue.length === 5 &&
+        parts[0].length !== 3 &&
+        !inputValue.includes("-")
+      ) {
+        toast.error("Invalid format. Please enter a number like 123-7.");
         return;
       }
-      if ((parts.length === 0 || !/^\d+$/.test(parts[0]))) {
-        alert("Invalid format. Please enter a number like 123-7.");
+      if (parts.length === 0 || !/^\d+$/.test(parts[0])) {
+        toast.error("Invalid format. Please enter a number like 123-7.");
         return;
       }
 
@@ -353,7 +389,7 @@ export default function JodiPannelResultSection() {
         const firstDigit = parseInt(mainNumber[0], 10);
         const secondDigit = parseInt(mainNumber[1], 10);
         if (firstDigit >= secondDigit) {
-          alert(
+          toast.error(
             "Invalid number: first digit must be smaller than second digit."
           );
           return;
@@ -362,21 +398,14 @@ export default function JodiPannelResultSection() {
 
       if (mainNumber.length >= 3) {
         const lastThree = mainNumber.slice(-3).split("").map(Number);
-        console.log(lastThree);
-        
         const sum = lastThree.reduce((a, b) => a + b, 0);
-        console.log(sum);
-        
         const expectedCheckDigit = sum % 10;
-        console.log(expectedCheckDigit);
-        console.log();
-        
-        
+
         if (
           providedCheckDigit &&
           parseInt(providedCheckDigit, 10) !== expectedCheckDigit
         ) {
-          alert(
+          toast.error(
             `Invalid number: check digit should be ${expectedCheckDigit} (sum of last 3 digits).`
           );
           return;
@@ -396,21 +425,20 @@ export default function JodiPannelResultSection() {
         });
 
         if (updateData.success) {
-          fetchGamesAgain();
+          toast.success("Game Number updated successfully!");
           setShowEditModal(false);
-          alert("Game Number updated successfully!");
+          fetchGamesAgain();
         } else {
-          alert("Failed to update game: " + updateData.message);
+          toast.error("Failed to update game: " + updateData.message);
         }
       } catch (err) {
         console.error(err);
-        alert("Error updating game");
+        toast.error("Error updating game");
       }
     }
   };
 
   const getDisplayResult = (item) => {
-    // console.log(item);
     const lastOpen =
       Array.isArray(item.openNo) && item.openNo.length > 0
         ? item.openNo[item.openNo.length - 1]
@@ -466,7 +494,7 @@ export default function JodiPannelResultSection() {
       {role === "Admin" && (
         <div className="mb-3">
           <button
-            className="btn btn-primary m-1"
+            className="btn btn-success m-1"
             onClick={() => {
               setModalType("addGame");
               setShowModal(true);
@@ -500,6 +528,15 @@ export default function JodiPannelResultSection() {
             }}
           >
             Import By Link
+          </button>
+          <button
+            className="btn btn-primary m-1"
+            onClick={() => {
+              setModalType("Set Active Incative");
+              setShowModal(true);
+            }}
+          >
+            Set Active InActive
           </button>
         </div>
       )}
@@ -606,10 +643,18 @@ export default function JodiPannelResultSection() {
               <h5 style={{ color: item.resultColor || "#000000" }}>
                 {displayResult}
               </h5>
+              <div className="d-flex justify-content-center gap-3">
+                <p className="mb-0">{item.startTime}</p>
+                <p className="mb-0">{item.endTime}</p>
+              </div>
 
-              <div className="d-flex justify-content-around">
+              {/* Action Buttons (Edit/Live Time) - Refactored */}
+              <div className="d-flex justify-content-center mt-3 gap-2">
+                {" "}
+                {/* Responsive container */}
                 <button
-                  className="btn btn-primary"
+                  // 💡 Added btn-sm for small size, ensuring it fits well on mobile
+                  className="btn btn-primary btn-sm"
                   onClick={() => handleEditClick(item)}
                   hidden={
                     !(
@@ -622,7 +667,8 @@ export default function JodiPannelResultSection() {
                   EDIT
                 </button>
                 <button
-                  className="btn btn-info ml-2"
+                  // 💡 Added btn-sm for small size, matching the EDIT button
+                  className="btn btn-info btn-sm"
                   onClick={() => {
                     setSelectedGameId(item._id);
                     setShowLiveModal(true);
@@ -667,7 +713,6 @@ export default function JodiPannelResultSection() {
             {modalType === "addGame" && (
               <form onSubmit={handleAddGame}>
                 <h3>Add Game</h3>
-
                 {/* Game Name */}
                 <input
                   name="name"
@@ -680,14 +725,23 @@ export default function JodiPannelResultSection() {
                 />
 
                 {/* Owner */}
-                <input
+                <label>Owner</label>
+                <select
                   name="owner"
-                  placeholder="Owner"
                   value={newGame.owner}
                   onChange={(e) =>
                     setNewGame({ ...newGame, owner: e.target.value })
                   }
-                />
+                  required
+                  className="form-control"
+                >
+                  <option value="">-- Select Owner --</option>
+                  {allUser.map((agent) => (
+                    <option key={agent._id} value={agent.name}>
+                      {agent.name}
+                    </option>
+                  ))}
+                </select>
 
                 {/* Start Time */}
                 <label>Start Time</label>
@@ -767,12 +821,15 @@ export default function JodiPannelResultSection() {
                 />
 
                 <div className="mt-2">
-                  <button type="submit" className="btn btn-success m-1">
+                  <button
+                    type="submit"
+                    className="btn btn-success m-1 addGame-Save-button"
+                  >
                     Save
                   </button>
                   <button
                     type="button"
-                    className="btn btn-secondary ml-2 m-4"
+                    className="btn btn-secondary ml-2 m-4 addGame-Save-button"
                     onClick={() => setShowModal(false)}
                   >
                     Cancel
@@ -874,6 +931,58 @@ export default function JodiPannelResultSection() {
               </form>
             )}
 
+            {modalType === "Set Active Incative" && (
+              <form
+                onSubmit={(e) =>
+                  handleSetActiveInactive(e, selectedGameId, selectedStatus)
+                }
+                className="over"
+              >
+                <h3>Set Active / Inactive</h3>
+
+                {/* Select Game */}
+                <select
+                  className="form-control mb-2"
+                  value={selectedGameId}
+                  onChange={(e) => setSelectedGameId(e.target.value)}
+                  required
+                >
+                  <option value="">-- Select a game --</option>
+                  {games.map((game) => (
+                    <option key={game._id} value={game._id}>
+                      {game.name}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Select Status */}
+                <select
+                  className="form-control mb-2"
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  required
+                >
+                  <option value="">-- Select status --</option>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+
+                {/* Buttons */}
+                <div className="d-flex justify-content-between mt-3">
+                  <button type="submit" className="btn btn-success">
+                    Update Status
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setShowModal(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+
             {modalType === "import" && (
               <form onSubmit={fetchAndUpdateGame}>
                 <h3>Import Games By Link</h3>
@@ -900,7 +1009,7 @@ export default function JodiPannelResultSection() {
 
       {/* ✅ Edit Modal for Results */}
       {showLiveModal && (
-        <div className="AddGameModelMainContainer overflow-auto" >
+        <div className="AddGameModelMainContainer overflow-auto">
           <div className="AddGameModelSeconContainer">
             <h4>Set Live Time</h4>
             <input
@@ -921,19 +1030,19 @@ export default function JodiPannelResultSection() {
                       }
                     );
                     if (response.success) {
-                      alert("Live time set successfully!");
-                      fetchGamesAgain();
+                      toast.success("Live time set successfully!");
                       setShowLiveModal(false);
+                      fetchGamesAgain();
                       setSelectedTime("");
                     } else {
-                      alert("Failed: " + response.message);
+                      toast.error("Failed: " + response.message);
                     }
                   } catch (err) {
                     console.error(err);
-                    alert("Error setting live time");
+                    toast.error("Error setting live time");
                   }
                 }}
-              > 
+              >
                 Save
               </button>
               <button
@@ -1072,6 +1181,7 @@ export default function JodiPannelResultSection() {
           </div>
         </div>
       )}
+      <ToastContainer position="top-right" autoClose={2000} />
     </div>
   );
 }

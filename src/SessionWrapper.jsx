@@ -1,36 +1,43 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";// 👉 install: npm install jwt-decode
 
 export default function SessionWrapper({ children }) {
   const navigate = useNavigate();
 
   useEffect(() => {
     const checkExpiry = () => {
-      const loginTime = localStorage.getItem("loginTime");
-      if (!loginTime) return;
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) return;
 
-      const oneHour = 60 * 60 * 1000; // 1 hour
-      const now = Date.now();
+        const decoded = jwtDecode(token); // { exp: 123456789, iat: ... }
+        const now = Date.now() / 1000; // in seconds
 
-      if (now - parseInt(loginTime, 10) > oneHour) {
-        // Clear expired session
-        localStorage.removeItem("token");
-        localStorage.removeItem("userRole");
-        localStorage.removeItem("loginTime");
+        if (decoded.exp < now) {
+          // Token expired → clear session
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("userRole");
+          localStorage.removeItem("loginTime");
 
-        alert("Session expired. Please log in again.");
-        navigate("/login");
+          navigate("/login", { replace: true });
+        }
+      } catch (err) {
+        console.error("Error checking session expiry:", err);
+        // fallback → force logout
+        localStorage.clear();
+        navigate("/login", { replace: true });
       }
     };
 
     // Run immediately
     checkExpiry();
 
-    // Also run every 5 minutes
-    const interval = setInterval(checkExpiry, 5 * 60 * 1000);
+    // Check every 10s (since expiry is short: 1 min)
+    const interval = setInterval(checkExpiry, 10 * 1000);
 
     return () => clearInterval(interval);
   }, [navigate]);
 
-  return children;
+  return <>{children}</>;
 }

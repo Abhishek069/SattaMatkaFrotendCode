@@ -10,8 +10,8 @@ const LiveResultSection = () => {
     const fetchResults = async () => {
       try {
         const data = await api("/AllGames/latest-updates");
-
-        const formatted = data.map((game) => {
+        if(data.hasData){
+          const formatted = data.data?.map((game) => {
           const lastOpen = game.openNo?.length
             ? game.openNo[game.openNo.length - 1]
             : null;
@@ -38,7 +38,7 @@ const LiveResultSection = () => {
           const closeDay = lastClose?.[4] || "";
 
           let lastResult = "N/A";
-
+          
           if (lastOpen && lastClose && openDay === closeDay) {
             // ✅ Same day → combine
             lastResult = `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
@@ -51,7 +51,7 @@ const LiveResultSection = () => {
           } else if (
             lastClose &&
             (!lastOpen || new Date(closeTime) > new Date(openTime))
-          ) {
+            ) {
             // ✅ Only close or newer close
             lastResult = `${closeMain}-${closeDigit}`;
           }
@@ -63,6 +63,7 @@ const LiveResultSection = () => {
         });
 
         setResults(formatted);
+      }
       } catch (error) {
         console.error("Error fetching live results:", error);
       } finally {

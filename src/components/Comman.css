@@ -415,3 +415,41 @@
   color: red;
 }
 
+
+
+/* Main modal overlay */
+.AddGameModelMainContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+  padding: 10px; /* ensures spacing on mobile */
+}
+
+/* Modal content box */
+.AddGameModelSeconContainer {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px; /* keep it smaller on desktop */
+  max-height: 90vh; /* prevent vertical overflow */
+  overflow-y: auto; /* scrollable content on small screens */
+  padding: 20px;
+}
+
+/* Make inputs/buttons take full width */
+.AddGameModelSeconContainer input,
+.AddGameModelSeconContainer select{
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.addGame-Save-button{
+  width: 40%;
+}
