@@ -86,6 +86,7 @@ export default function JodiPannelResultSection() {
     owner: "",
     resultNo: "111-11-111",
     startTime: "",
+    status: "Active",
     endTime: "",
     nameColor: "#000000", // default black
     resultColor: "#000000", // default black
@@ -103,7 +104,7 @@ export default function JodiPannelResultSection() {
 
   const [deleteGameName, setDeleteGameName] = useState("");
   const [linkForUpdateGame, setLinkForUpdateGame] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState()
+  const [selectedStatus, setSelectedStatus] = useState();
 
   // 🔹 Handlers
   // const handleFormChange = (e) => {
@@ -198,7 +199,7 @@ export default function JodiPannelResultSection() {
   const handleSetActiveInactive = async (e, gameId, newStatus) => {
     e.preventDefault();
     try {
-      await api(`/AllGames/updateGame/${gameId}`, {
+      await api(`/AllGames/updateStatus/${gameId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -209,6 +210,8 @@ export default function JodiPannelResultSection() {
       toast.success(`Game status updated to ${newStatus}!`);
       setShowModal(false);
       fetchGamesAgain();
+      setSelectedStatus();
+      setSelectedGameId();
     } catch (err) {
       console.error("Error updating game status:", err);
       toast.error("Failed to update game status");
@@ -541,167 +544,212 @@ export default function JodiPannelResultSection() {
         </div>
       )}
 
-      {games.map((item, index) => {
-        let displayResult = "No numbers";
-        if (
-          (Array.isArray(item.openNo) && item?.openNo.length > 0) ||
-          (Array.isArray(item.resultNo) && item?.resultNo.length > 0)
-        ) {
-          displayResult = (
-            <p style={{ color: item.resultColor || "#000000" }}>
-              {getDisplayResult(item)}
-            </p>
-          );
-        }
+      {games
+        // Filter logic: Admin sees all, User/Agent only see active
+        .filter((item) => {
+          if (role === "Admin") return true;
+          return item.status === "Active";
+        })
+        .map((item, index) => {
+          // ✅ Function to decide whether to show Loading or actual result
+          const getDisplayResultOrLoading = (item) => {
+            const now = new Date();
 
-        return (
-          <div
-            className="jodi-panel-container jodi-panel-container-second m-2 p-2"
-            key={item._id || index}
-            style={{ backgroundColor: item.panelColor || "" }} // ✅ background color
-          >
-            <button
-              className="btn btn-sm btn-primary button-jodi-panel"
-              style={{
-                height: "40px", // make it tall
-                width: "130px", // make it narrow
-                textAlign: "center",
-                padding: "5px",
-              }}
-              onClick={() => handlePageChange(item)}
+            // Parse startTime in "HH:mm" format
+            let startTime = null;
+            if (item.startTime) {
+              const [hours, minutes] = item.startTime.split(":").map(Number);
+              startTime = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate(),
+                hours,
+                minutes,
+                0
+              );
+            }
+            
+            // Show loading if startTime is invalid
+            if (!startTime || isNaN(startTime.getTime())) {
+              return <p style={{ color: "#ff0000" }}>Loading...</p>;
+            }
+
+            const tenMinutesBeforeStart = new Date(
+              startTime.getTime() - 10 * 60 * 1000
+            );
+            
+            // Show loading if current time is before startTime - 10min OR result not available
+            if ( (now >= tenMinutesBeforeStart) && (now <= startTime)) {
+              return <p style={{ color: "#ff0000" }}>Loading...</p>;
+            }
+
+            // Show actual result if available
+            if (
+              (Array.isArray(item.openNo) && item.openNo.length > 0) ||
+              (Array.isArray(item.resultNo) && item.resultNo.length > 0)
+            ) {
+              return (
+                <p style={{ color: item.resultColor || "#000000" }}>
+                  {getDisplayResult(item)}
+                </p>
+              );
+            }
+
+            // Fallback
+            return <p style={{ color: "#000000" }}>No numbers</p>;
+          };
+
+          const displayResult = getDisplayResultOrLoading(item);
+
+          return (
+            <div
+              className="jodi-panel-container jodi-panel-container-second m-2 p-2"
+              key={item._id || index}
+              style={{ backgroundColor: item.panelColor || "" }}
             >
-              Record
-            </button>
-            <div>
+              {/* Top Record button */}
+              <button
+                className="btn btn-sm btn-primary button-jodi-panel"
+                style={{
+                  height: "40px",
+                  width: "130px",
+                  textAlign: "center",
+                  padding: "5px",
+                }}
+                onClick={() => handlePageChange(item)}
+              >
+                Record
+              </button>
+
               <div>
-                {role === "Admin" ? (
-                  <>
-                    {/* ✅ Name color */}
-                    <h4
-                      style={{
-                        fontSize: `${nameSizes[item._id] || 18}px`,
-                        color: item.nameColor || "#000000",
-                      }}
-                    >
-                      {item.name}
-                    </h4>
+                <div>
+                  {role === "Admin" ? (
+                    <>
+                      <h4
+                        style={{
+                          fontSize: `${nameSizes[item._id] || 18}px`,
+                          color: item.nameColor || "#000000",
+                        }}
+                      >
+                        {item.name}
+                      </h4>
 
-                    {/* ✅ Blinking notification with custom color */}
-                    {Array.isArray(item.Notification_Message) &&
-                    item.Notification_Message.length > 0 ? (
-                      <ScrollingNotification
-                        messages={item.Notification_Message}
-                        interval={6000}
-                        color={item.notificationColor || "#ff0000"}
-                        speed={10} // you can adjust this
+                      {Array.isArray(item.Notification_Message) &&
+                      item.Notification_Message.length > 0 ? (
+                        <ScrollingNotification
+                          messages={item.Notification_Message}
+                          interval={6000}
+                          color={item.notificationColor || "#ff0000"}
+                          speed={10}
+                        />
+                      ) : null}
+
+                      <input
+                        type="range"
+                        min="12"
+                        max="40"
+                        value={nameSizes[item._id] || 18}
+                        onChange={(e) =>
+                          setNameSizes({
+                            ...nameSizes,
+                            [item._id]: Number(e.target.value),
+                          })
+                        }
                       />
-                    ) : null}
+                      <span className="ml-2">
+                        {nameSizes[item._id] || 18}px
+                      </span>
+                      <button
+                        className="btn btn-success btn-sm ml-2"
+                        onClick={() => handleSaveFontSize(item._id)}
+                      >
+                        Save
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <h4
+                        style={{
+                          fontSize: `${nameSizes[item._id] || 18}px`,
+                          color: item.nameColor || "#000000",
+                        }}
+                      >
+                        {item.name}
+                      </h4>
 
-                    <input
-                      type="range"
-                      min="12"
-                      max="40"
-                      value={nameSizes[item._id] || 18}
-                      onChange={(e) =>
-                        setNameSizes({
-                          ...nameSizes,
-                          [item._id]: Number(e.target.value),
-                        })
-                      }
-                    />
-                    <span className="ml-2">{nameSizes[item._id] || 18}px</span>
-                    <button
-                      className="btn btn-success btn-sm ml-2"
-                      onClick={() => handleSaveFontSize(item._id)}
-                    >
-                      Save
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <h4
-                      style={{
-                        fontSize: `${nameSizes[item._id] || 18}px`,
-                        color: item.nameColor || "#000000",
-                      }}
-                    >
-                      {item.name}
-                    </h4>
-                    {Array.isArray(item.Notification_Message) &&
-                    item.Notification_Message.length > 0 ? (
-                      <ScrollingNotification
-                        messages={item.Notification_Message}
-                        interval={3000}
-                        color={item.notificationColor || "#ff0000"}
-                      />
-                    ) : null}
-                  </>
-                )}
+                      {Array.isArray(item.Notification_Message) &&
+                      item.Notification_Message.length > 0 ? (
+                        <ScrollingNotification
+                          messages={item.Notification_Message}
+                          interval={3000}
+                          color={item.notificationColor || "#ff0000"}
+                        />
+                      ) : null}
+                    </>
+                  )}
+                </div>
+
+                {/* ✅ Result or Loading */}
+                <h5 style={{ color: item.resultColor || "#000000" }}>
+                  {displayResult}
+                </h5>
+
+                {/* Action Buttons (Edit / Set Live Time) */}
+                <div className="d-flex justify-content-center mt-3 gap-2">
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => handleEditClick(item)}
+                    hidden={
+                      !(
+                        role === "Admin" ||
+                        (role === "Agent" && item.owner === username)
+                      )
+                    }
+                    disabled={new Date(item.valid_date).getTime() < Date.now()}
+                  >
+                    EDIT
+                  </button>
+                  <button
+                    className="btn btn-info btn-sm"
+                    onClick={() => {
+                      setSelectedGameId(item._id);
+                      setShowLiveModal(true);
+                    }}
+                    hidden={
+                      !(
+                        role === "Admin" ||
+                        (role === "Agent" && item.owner === username)
+                      )
+                    }
+                    disabled={new Date(item.valid_date).getTime() < Date.now()}
+                  >
+                    Set Live Time
+                  </button>
+                </div>
+
+                {/* Game timing info */}
+                <div className="timeStamp-for-jodi-panel">
+                  <p>{item.startTime}</p>
+                  <p>{item.endTime}</p>
+                </div>
               </div>
 
-              {/* ✅ Result text color applied */}
-              <h5 style={{ color: item.resultColor || "#000000" }}>
-                {displayResult}
-              </h5>
-              
-              {/* Action Buttons (Edit/Live Time) - Refactored */}
-              <div className="d-flex justify-content-center mt-3 gap-2">
-                {" "}
-                {/* Responsive container */}
-                <button
-                  // 💡 Added btn-sm for small size, ensuring it fits well on mobile
-                  className="btn btn-primary btn-sm"
-                  onClick={() => handleEditClick(item)}
-                  hidden={
-                    !(
-                      role === "Admin" ||
-                      (role === "Agent" && item.owner === username)
-                    )
-                  }
-                  disabled={new Date(item.valid_date).getTime() < Date.now()}
-                >
-                  EDIT
-                </button>
-                <button
-                  // 💡 Added btn-sm for small size, matching the EDIT button
-                  className="btn btn-info btn-sm"
-                  onClick={() => {
-                    setSelectedGameId(item._id);
-                    setShowLiveModal(true);
-                  }}
-                  hidden={
-                    !(
-                      role === "Admin" ||
-                      (role === "Agent" && item.owner === username)
-                    )
-                  }
-                  disabled={new Date(item.valid_date).getTime() < Date.now()}
-                >
-                  Set Live Time
-                </button>
-              </div>
-
-              <div className="timeStamp-for-jodi-panel">
-                <p>{item.startTime}</p>
-                <p>{item.endTime}</p>
-              </div>
+              {/* Bottom Record button */}
+              <button
+                onClick={() => handlePageChange(item, "panel")}
+                style={{
+                  height: "40px",
+                  width: "130px",
+                  textAlign: "center",
+                  padding: "5px",
+                }}
+                className="btn btn-sm btn-primary button-jodi-panel"
+              >
+                Record
+              </button>
             </div>
-
-            <button
-              onClick={() => handlePageChange(item, "panel")}
-              style={{
-                height: "40px", // make it tall
-                width: "130px", // make it narrow
-                textAlign: "center",
-                padding: "5px",
-              }}
-              className="btn btn-sm btn-primary button-jodi-panel"
-            >
-              Record
-            </button>
-          </div>
-        );
-      })}
+          );
+        })}
 
       {showModal && (
         <div className="AddGameModelMainContainer">
