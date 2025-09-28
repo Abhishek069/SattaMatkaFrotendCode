@@ -25,7 +25,7 @@ export default function UserPayments() {
         const usersData = await api("/user/");
         const gamesData = await api("/AllGames/");
 
-        setUsers(usersData || []);
+        setUsers(Array.isArray(usersData.data) ? usersData.data : []);  
         setGamesForUser(gamesData?.data || []);
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -45,14 +45,14 @@ export default function UserPayments() {
   const token = localStorage.getItem("authToken");
 
   let username = null;
-  let role = null;
+  // let role = null;
 
   if (token) {
     try {
       const decoded = jwtDecode(token);
-      role = decoded.role;
+      // role = decoded.role;
       username = decoded.username;
-      console.log(role, username);
+      // console.log(role, username);
     } catch (err) {
       console.error("Invalid token", err);
     }
@@ -105,9 +105,9 @@ export default function UserPayments() {
   const filterGameOflogedUser = gamesForUser.filter(
     (game) => game.owner === username
   );
-  filterGameOflogedUser.map((e) => {
-    console.log(e);
-  });
+  // filterGameOflogedUser.map((e) => {
+  //   console.log(e);
+  // });
 
   return (
     <>

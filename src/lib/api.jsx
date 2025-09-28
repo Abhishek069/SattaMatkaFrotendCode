@@ -1,4 +1,3 @@
-// src/api.jsx
 export const API_BASE = import.meta.env.VITE_API_BASE;
 
 export async function api(path, options = {}) {
@@ -6,6 +5,10 @@ export async function api(path, options = {}) {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     ...options
   });
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  return res.json();
+
+  // Always parse JSON
+  const data = await res.json().catch(() => ({}));
+
+  // Include HTTP status in the response for easier handling
+  return { status: res.status, ok: res.ok, ...data };
 }
