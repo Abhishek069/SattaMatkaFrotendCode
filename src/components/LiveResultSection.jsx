@@ -5,68 +5,67 @@ import { api } from "../lib/api";
 const LiveResultSection = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchResults = async () => {
       try {
         const data = await api("/AllGames/latest-updates");
-        console.log(data.hasData && Array.isArray(data.data))
-        if(data.hasData && Array.isArray(data.data)){
-          const formatted = data.data?.map((game) => {
-          const lastOpen = game.openNo?.length
-            ? game.openNo[game.openNo.length - 1]
-            : null;
-          const lastClose = game.closeNo?.length
-            ? game.closeNo[game.closeNo.length - 1]
-            : null;
 
-          if (!lastOpen && !lastClose) {
-            return {
-              title: game.name,
-              numbers: "N/A",
-            };
-          }
+        // Validate response shape
+        if (data && data.hasData && Array.isArray(data.data)) {
+          const formatted = data.data.map((game) => {
+            const lastOpen = game.openNo?.length
+              ? game.openNo[game.openNo.length - 1]
+              : null;
+            const lastClose = game.closeNo?.length
+              ? game.closeNo[game.closeNo.length - 1]
+              : null;
 
-          // Extract parts
-          const openMain = lastOpen?.[0] || "";
-          const openDigit = lastOpen?.[1] || "";
-          const openTime = lastOpen?.[2] || "";
-          const openDay = lastOpen?.[4] || "";
+            if (!lastOpen && !lastClose) {
+              return { title: game.name, numbers: "N/A" };
+            }
 
-          const closeMain = lastClose?.[0] || "";
-          const closeDigit = lastClose?.[1] || "";
-          const closeTime = lastClose?.[2] || "";
-          const closeDay = lastClose?.[4] || "";
+            const openMain = lastOpen?.[0] || "";
+            const openDigit = lastOpen?.[1] || "";
+            const openTime = lastOpen?.[2] || "";
+            const openDay = lastOpen?.[4] || "";
 
-          let lastResult = "N/A";
-          
-          if (lastOpen && lastClose && openDay === closeDay) {
-            // ✅ Same day → combine
-            lastResult = `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
-          } else if (
-            lastOpen &&
-            (!lastClose || new Date(openTime) > new Date(closeTime))
-          ) {
-            // ✅ Only open or newer open
-            lastResult = `${openMain}-${openDigit}`;
-          } else if (
-            lastClose &&
-            (!lastOpen || new Date(closeTime) > new Date(openTime))
+            const closeMain = lastClose?.[0] || "";
+            const closeDigit = lastClose?.[1] || "";
+            const closeTime = lastClose?.[2] || "";
+            const closeDay = lastClose?.[4] || "";
+
+            let lastResult = "N/A";
+
+            if (lastOpen && lastClose && openDay === closeDay) {
+              // ✅ Same day → combine
+              lastResult = `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
+            } else if (
+              lastOpen &&
+              (!lastClose || new Date(openTime) > new Date(closeTime))
             ) {
-            // ✅ Only close or newer close
-            lastResult = `${closeMain}-${closeDigit}`;
-          }
+              // ✅ Only open or newer open
+              lastResult = `${openMain}-${openDigit}`;
+            } else if (
+              lastClose &&
+              (!lastOpen || new Date(closeTime) > new Date(openTime))
+            ) {
+              // ✅ Only close or newer close
+              lastResult = `${closeMain}-${closeDigit}`;
+            }
 
-          return {
-            title: game.name,
-            numbers: lastResult,
-          };
-        });
+            return { title: game.name, numbers: lastResult };
+          });
 
-        setResults(formatted);
-      }
-      } catch (error) {
-        console.error("Error fetching live results:", error);
+          setResults(formatted);
+        } else {
+          setResults([]); // invalid or empty response
+        }
+      } catch (err) {
+        console.error("Error fetching live results:", err);
+        setError("Failed to fetch live results. Please try again later.");
+        setResults([]);
       } finally {
         setLoading(false);
       }
@@ -91,7 +90,7 @@ const LiveResultSection = () => {
 
   return (
     <div
-      className=" border border-white m-1 p-3 Live-Result-section-main-container"
+      className="border border-white m-1 p-3 Live-Result-section-main-container"
       style={{ backgroundColor: "#ffcc99" }}
     >
       <div
@@ -102,7 +101,9 @@ const LiveResultSection = () => {
       </div>
 
       <div className="row">
-        {results.length > 0 ? (
+        {error ? (
+          <p className="text-center text-danger">{error}</p>
+        ) : results.length > 0 ? (
           results.map((item, idx) => (
             <div className="col-md-4" key={idx}>
               <LiveResultItem title={item.title} numbers={item.numbers} />
