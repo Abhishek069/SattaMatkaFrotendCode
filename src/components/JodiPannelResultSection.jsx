@@ -197,6 +197,8 @@ export default function JodiPannelResultSection() {
   };
 
   const handleSetActiveInactive = async (e, gameId, newStatus) => {
+    console.log(gameId);
+    
     e.preventDefault();
     try {
       await api(`/AllGames/updateStatus/${gameId}`, {
@@ -391,7 +393,7 @@ export default function JodiPannelResultSection() {
       if (mainNumber.length >= 2) {
         const firstDigit = parseInt(mainNumber[0], 10);
         const secondDigit = parseInt(mainNumber[1], 10);
-        if (firstDigit >= secondDigit) {
+        if (firstDigit > secondDigit) {
           toast.error(
             "Invalid number: first digit must be smaller than second digit."
           );
@@ -532,15 +534,6 @@ export default function JodiPannelResultSection() {
           >
             Import By Link
           </button>
-          <button
-            className="btn btn-primary m-1"
-            onClick={() => {
-              setModalType("Set Active Incative");
-              setShowModal(true);
-            }}
-          >
-            Set Active InActive
-          </button>
         </div>
       )}
 
@@ -568,7 +561,7 @@ export default function JodiPannelResultSection() {
                 0
               );
             }
-            
+
             // Show loading if startTime is invalid
             if (!startTime || isNaN(startTime.getTime())) {
               return <p style={{ color: "#ff0000" }}>Loading...</p>;
@@ -577,9 +570,9 @@ export default function JodiPannelResultSection() {
             const tenMinutesBeforeStart = new Date(
               startTime.getTime() - 10 * 60 * 1000
             );
-            
+
             // Show loading if current time is before startTime - 10min OR result not available
-            if ( (now >= tenMinutesBeforeStart) && (now <= startTime)) {
+            if (now >= tenMinutesBeforeStart && now <= startTime) {
               return <p style={{ color: "#ff0000" }}>Loading...</p>;
             }
 
@@ -611,8 +604,8 @@ export default function JodiPannelResultSection() {
               <button
                 className="btn btn-sm btn-primary button-jodi-panel"
                 style={{
-                  height: "40px",
-                  width: "130px",
+                  height: "30px",
+                  width: "70px",
                   textAlign: "center",
                   padding: "5px",
                 }}
@@ -709,11 +702,15 @@ export default function JodiPannelResultSection() {
                   >
                     EDIT
                   </button>
+                  {console.log(item)}
                   <button
-                    className="btn btn-info btn-sm"
-                    onClick={() => {
-                      setSelectedGameId(item._id);
-                      setShowLiveModal(true);
+                    className={`btn m-1 ${
+                      item.status === "Active" ? "btn-success" : "btn-danger"
+                    }`}
+                    onClick={(e) => {
+                       handleSetActiveInactive(e, item._id, item.status === "Active" ? "InActive" : "Active")
+                      // setModalType("Set Active Inactive");
+                      // setShowModal(true);
                     }}
                     hidden={
                       !(
@@ -721,9 +718,8 @@ export default function JodiPannelResultSection() {
                         (role === "Agent" && item.owner === username)
                       )
                     }
-                    disabled={new Date(item.valid_date).getTime() < Date.now()}
                   >
-                    Set Live Time
+                    {item.status === "Active" ? "Active" : "Inactive"}
                   </button>
                 </div>
 
@@ -738,8 +734,8 @@ export default function JodiPannelResultSection() {
               <button
                 onClick={() => handlePageChange(item, "panel")}
                 style={{
-                  height: "40px",
-                  width: "130px",
+                  height: "30px",
+                  width: "70px",
                   textAlign: "center",
                   padding: "5px",
                 }}
@@ -1104,10 +1100,9 @@ export default function JodiPannelResultSection() {
         <div className="AddGameModelMainContainer overflow-auto">
           <div className="AddGameModelSeconContainer">
             <h2>{nameForPop}</h2>
-            <h4>Add Result Number</h4>
             <form onSubmit={handleUpdateGame}>
               <div className="form-group">
-                <label htmlFor="openOrClose">Open / Close / Edit Color</label>
+                <label htmlFor="openOrClose">Action</label>
                 <select
                   id="openOrClose"
                   value={editGame.openOrClose}
@@ -1121,51 +1116,42 @@ export default function JodiPannelResultSection() {
                   <option value="Close">Close</option>
                   <option value="Add Notification">Add Notification</option>
                   <option value="Edit Color">Edit Color</option>
+                  <option value="Set Live Time">Set Live Time</option>
                 </select>
               </div>
 
-              {editGame.openOrClose === "Add Notification" ? (
+              {editGame.openOrClose === "Add Notification" && (
                 <div>
-                  <div className="d-flex flex-column justify-content-center">
-                    <label htmlFor="Notification-input-tag-1">
-                      Notification message 1
-                    </label>
-                    <input
-                      id="Notification-input-tag-1"
-                      name="Notification-input-tag-1"
-                      value={input1}
-                      onChange={(e) => setInput1(e.target.value)}
-                    />
-                  </div>
-                  <div className="d-flex flex-column justify-content-center m-1">
-                    <label htmlFor="Notification-input-tag-2">
-                      Notification message 2
-                    </label>
-                    <input
-                      id="Notification-input-tag-2"
-                      name="Notification-input-tag-2"
-                      value={input2}
-                      onChange={(e) => setInput2(e.target.value)}
-                    />
-                  </div>
-                </div>
-              ) : editGame.openOrClose === "Open" ||
-                editGame.openOrClose === "Close" ? (
-                <div className="form-group">
-                  <label htmlFor="resultNo">Result No</label>
+                  <label>Notification 1</label>
                   <input
-                    id="resultNo"
+                    value={input1}
+                    onChange={(e) => setInput1(e.target.value)}
+                  />
+                  <label>Notification 2</label>
+                  <input
+                    value={input2}
+                    onChange={(e) => setInput2(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {(editGame.openOrClose === "Open" ||
+                editGame.openOrClose === "Close") && (
+                <div>
+                  <label>Result No</label>
+                  <input
                     type="text"
                     placeholder="e.g. 111-3"
                     value={editGame.resultNo}
                     onChange={(e) =>
                       setEditGame({ ...editGame, resultNo: e.target.value })
                     }
-                    required
                   />
                 </div>
-              ) : editGame.openOrClose === "Edit Color" ? (
-                <div className="form-group">
+              )}
+
+              {editGame.openOrClose === "Edit Color" && (
+                <div>
                   <label>Game Name Color</label>
                   <input
                     type="color"
@@ -1174,7 +1160,6 @@ export default function JodiPannelResultSection() {
                       setEditGame({ ...editGame, nameColor: e.target.value })
                     }
                   />
-
                   <label>Result Color</label>
                   <input
                     type="color"
@@ -1183,8 +1168,7 @@ export default function JodiPannelResultSection() {
                       setEditGame({ ...editGame, resultColor: e.target.value })
                     }
                   />
-
-                  <label>Panel Background Color</label>
+                  <label>Panel Color</label>
                   <input
                     type="color"
                     value={editGame.panelColor || ""}
@@ -1192,7 +1176,6 @@ export default function JodiPannelResultSection() {
                       setEditGame({ ...editGame, panelColor: e.target.value })
                     }
                   />
-
                   <label>Notification Color</label>
                   <input
                     type="color"
@@ -1205,17 +1188,26 @@ export default function JodiPannelResultSection() {
                     }
                   />
                 </div>
-              ) : (
-                <div></div>
               )}
 
-              <div className="button-group">
-                <button type="submit" className="btn btn-success">
+              {editGame.openOrClose === "Set Live Time" && (
+                <div>
+                  <label>Live Time</label>
+                  <input
+                    type="number"
+                    value={selectedTime}
+                    onChange={(e) => setSelectedTime(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div className="button-group mt-3">
+                <button type="submit" className="btn btn-primary">
                   Save
                 </button>
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-secondary ms-2"
                   onClick={() => setShowEditModal(false)}
                 >
                   Cancel
@@ -1225,6 +1217,7 @@ export default function JodiPannelResultSection() {
           </div>
         </div>
       )}
+
       <ToastContainer position="top-right" autoClose={2000} />
     </div>
   );
