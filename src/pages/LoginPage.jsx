@@ -1,6 +1,4 @@
-// src/components/LoginPage.jsx
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { ToastContainer, toast } from "react-toastify";
@@ -8,8 +6,16 @@ import "react-toastify/dist/ReactToastify.css";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ mobile: "", password: "" });
-  // const [error, setError] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // check if token already exists
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,36 +29,35 @@ const LoginPage = () => {
       toast.error("Both fields are required.");
       return;
     }
-    const data = await api("/user/authorize", {
-        method: "POST",
-        body: JSON.stringify({ mobile, password }),
-      });
 
-    console.log(data);
-    
-    
     try {
       const data = await api("/user/authorize", {
         method: "POST",
         body: JSON.stringify({ mobile, password }),
       });
-      console.log(data);
-      
 
       if (data.success) {
         localStorage.setItem("authToken", data.token);
         localStorage.setItem("userRole", data.role);
 
         toast.success("Login successful!");
-        setTimeout(() => navigate("/"), 1500); // small delay before redirect
+        setIsLoggedIn(true);
+        setTimeout(() => navigate("/"), 1500);
       } else {
-        console.log(data.error);
         toast.error(data.error || "Unauthorized: Invalid credentials.");
       }
     } catch (err) {
       console.error("Login request failed:", err);
       toast.error("Something went wrong. Please try again.");
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userRole");
+    setIsLoggedIn(false);
+    toast.info("Logged out successfully!");
+    navigate("/login"); // redirect back to login page
   };
 
   return (
@@ -72,50 +77,63 @@ const LoginPage = () => {
         {/* Right Side */}
         <div className="col-12 col-lg-6 bg-white p-5">
           <h2 className="mb-2 text-center">Satta Matka Aajj Tak</h2>
-          <h3 className="mb-4 text-center">Login to Your Account</h3>
+          {!isLoggedIn ? (
+            <>
+              <h3 className="mb-4 text-center">Login to Your Account</h3>
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label htmlFor="mobile" className="form-label fw-medium">
+                    Mobile No
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="mobile"
+                    name="mobile"
+                    value={formData.mobile}
+                    onChange={handleChange}
+                    placeholder="Mobile No"
+                  />
+                </div>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label htmlFor="mobile" className="form-label fw-medium">
-                Mobile No
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                id="mobile"
-                name="mobile"
-                value={formData.mobile}
-                onChange={handleChange}
-                placeholder="Mobile No"
-              />
-            </div>
+                <div className="mb-4">
+                  <label htmlFor="password" className="form-label fw-medium">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                  />
+                </div>
 
-            <div className="mb-4">
-              <label htmlFor="password" className="form-label fw-medium">
-                Password
-              </label>
-              <input
-                type="password"
-                className="form-control"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-              />
-            </div>
+                <div className="d-grid">
+                  <button type="submit" className="btn btn-primary">
+                    Sign In
+                  </button>
+                </div>
+              </form>
 
-            <div className="d-grid">
-              <button type="submit" className="btn btn-primary">
-                Sign In
+              <p className="text-center text-muted mt-4">
+                Don’t have an account? Please connect to xxxxx@xxx.com or call
+                3453334455
+              </p>
+            </>
+          ) : (
+            <div className="text-center">
+              <h3 className="mb-4">You are logged in</h3>
+              <button
+                onClick={handleLogout}
+                className="btn btn-danger px-4 py-2"
+              >
+                Logout
               </button>
             </div>
-          </form>
-
-          <p className="text-center text-muted mt-4">
-            Don’t have an account? Please connect to xxxxx@xxx.com or call
-            3453334455
-          </p>
+          )}
         </div>
       </div>
 

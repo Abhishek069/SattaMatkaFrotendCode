@@ -364,6 +364,26 @@ export default function JodiPannelResultSection() {
         console.error(err);
         toast.error("Error updating notification");
       }
+    } else if (editGame.openOrClose === "Set Live Time") {
+      console.log(editGame);
+      
+      try {
+        const response = await api(`/AllGames/setLiveTime/${editGame.id}`, {
+          method: "PUT",
+          body: JSON.stringify({ liveTime: selectedTime }),
+        });
+        if (response.success) {
+          toast.success("Live time set successfully!");
+          setShowLiveModal(false);
+          fetchGamesAgain();
+          setSelectedTime("");
+        } else {
+          toast.error("Failed: " + response.message);
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Error setting live time");
+      }
     } else {
       // 🔹 Handle Open/Close result number update
       const inputValue = editGame.resultNo || "";
@@ -609,7 +629,7 @@ export default function JodiPannelResultSection() {
                 Record
               </button>
 
-              <div style={{ width: "70%" ,maxWidth:"80%"}}>
+              <div style={{ width: "70%", maxWidth: "80%" }}>
                 <div>
                   {role === "Admin" ? (
                     <>
@@ -622,16 +642,16 @@ export default function JodiPannelResultSection() {
                         {item.name}
                       </h4>
 
-                      <div style={{maxWidth:"100%" ,width:"100%"}}>
-                      {Array.isArray(item.Notification_Message) &&
-                      item.Notification_Message.length > 0 ? (
-                        <ScrollingNotification
-                          messages={item.Notification_Message}
-                          interval={6000}
-                          color={item.notificationColor || "#ff0000"}
-                          speed={10}
-                        />
-                      ) : null}
+                      <div style={{ maxWidth: "100%", width: "100%" }}>
+                        {Array.isArray(item.Notification_Message) &&
+                        item.Notification_Message.length > 0 ? (
+                          <ScrollingNotification
+                            messages={item.Notification_Message}
+                            interval={6000}
+                            color={item.notificationColor || "#ff0000"}
+                            speed={10}
+                          />
+                        ) : null}
                       </div>
 
                       <input
@@ -1053,7 +1073,7 @@ export default function JodiPannelResultSection() {
       {showLiveModal && (
         <div className="AddGameModelMainContainer overflow-auto">
           <div className="AddGameModelSeconContainer">
-            <h4>Set Live Time</h4>
+            <h4>Set On time Live Time</h4>
             <input
               type="number"
               value={selectedTime}
@@ -1173,7 +1193,7 @@ export default function JodiPannelResultSection() {
                   <label>Panel Color</label>
                   <input
                     type="color"
-                    value={editGame.panelColor || ""}
+                    value={editGame.panelColor || "#ffcb99"}
                     onChange={(e) =>
                       setEditGame({ ...editGame, panelColor: e.target.value })
                     }
@@ -1181,7 +1201,7 @@ export default function JodiPannelResultSection() {
                   <label>Notification Color</label>
                   <input
                     type="color"
-                    value={editGame.notificationColor || ""}
+                    value={editGame.notificationColor || "#ff0000"}
                     onChange={(e) =>
                       setEditGame({
                         ...editGame,
