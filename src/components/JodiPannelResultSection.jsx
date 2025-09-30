@@ -596,7 +596,7 @@ export default function JodiPannelResultSection() {
 
           return (
             <div
-              className="jodi-panel-container jodi-panel-container-second m-2 p-2"
+              className="jodi-panel-container jodi-panel-container-second m-1 p-2"
               key={item._id || index}
               style={{ backgroundColor: item.panelColor || "" }}
             >
@@ -605,7 +605,7 @@ export default function JodiPannelResultSection() {
                 className="btn btn-sm btn-primary button-jodi-panel"
                 style={{
                   height: "30px",
-                  width: "70px",
+                  width: "60px",
                   textAlign: "center",
                   padding: "5px",
                 }}
@@ -614,7 +614,7 @@ export default function JodiPannelResultSection() {
                 Record
               </button>
 
-              <div>
+              <div className="col-6" style={{width: "60%"}}>
                 <div>
                   {role === "Admin" ? (
                     <>
@@ -634,6 +634,7 @@ export default function JodiPannelResultSection() {
                           interval={6000}
                           color={item.notificationColor || "#ff0000"}
                           speed={10}
+                          className="col-4"
                         />
                       ) : null}
 
@@ -735,7 +736,7 @@ export default function JodiPannelResultSection() {
                 onClick={() => handlePageChange(item, "panel")}
                 style={{
                   height: "30px",
-                  width: "70px",
+                  width: "60px",
                   textAlign: "center",
                   padding: "5px",
                 }}

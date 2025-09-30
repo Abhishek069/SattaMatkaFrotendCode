@@ -115,6 +115,7 @@
   flex-direction: row;
   justify-content: space-between;
   border: solid 1px white;
+  width: 100%;
   align-items: center;
   /* width: 100%; */
 }
@@ -171,6 +172,9 @@
   line-height: 1.8;
   text-align: center;
   font-size: 15px;
+}
+.home-page-main-container{
+  width: 98%;
 }
 
 .data-block h3 {
