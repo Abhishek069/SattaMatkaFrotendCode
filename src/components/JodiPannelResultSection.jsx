@@ -10,20 +10,12 @@ import "react-toastify/dist/ReactToastify.css";
 // 🔹 Small component for scrolling notification messages
 const ScrollingNotification = ({
   messages,
-  interval = 3000,
   color = "#ff0000",
   speed = 10, // seconds for one full scroll
 }) => {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIndex((prev) => (prev + 1) % messages.length);
-    }, interval);
-    return () => clearInterval(timer);
-  }, [messages, interval]);
-
   if (!messages || messages.length === 0) return null;
+
+  const text = messages.join(" • "); // join into one long string
 
   return (
     <div
@@ -31,23 +23,25 @@ const ScrollingNotification = ({
         overflow: "hidden",
         whiteSpace: "nowrap",
         width: "100%",
+        maxWidth: "100%",
+        position: "relative",
       }}
     >
       <div
         style={{
           display: "inline-block",
-          paddingLeft: "100%",
           color,
           animation: `scroll ${speed}s linear infinite`,
         }}
       >
-        {messages[index]}
+        <span style={{ paddingRight: "2rem" }}>{text}</span>
+        <span>{text}</span> {/* duplicate for seamless loop */}
       </div>
 
       <style>{`
         @keyframes scroll {
           0% { transform: translateX(0); }
-          100% { transform: translateX(-100%); }
+          100% { transform: translateX(-50%); }
         }
       `}</style>
     </div>
@@ -198,7 +192,7 @@ export default function JodiPannelResultSection() {
 
   const handleSetActiveInactive = async (e, gameId, newStatus) => {
     console.log(gameId);
-    
+
     e.preventDefault();
     try {
       await api(`/AllGames/updateStatus/${gameId}`, {
@@ -604,8 +598,9 @@ export default function JodiPannelResultSection() {
               <button
                 className="btn btn-sm btn-primary button-jodi-panel"
                 style={{
-                  height: "30px",
-                  width: "60px",
+                  height: "60px",
+                  width: "30px",
+                  writingMode: "vertical-rl",
                   textAlign: "center",
                   padding: "5px",
                 }}
@@ -614,7 +609,7 @@ export default function JodiPannelResultSection() {
                 Record
               </button>
 
-              <div className="col-6" style={{width: "60%"}}>
+              <div style={{ width: "70%" ,maxWidth:"80%"}}>
                 <div>
                   {role === "Admin" ? (
                     <>
@@ -627,6 +622,7 @@ export default function JodiPannelResultSection() {
                         {item.name}
                       </h4>
 
+                      <div style={{maxWidth:"100%" ,width:"100%"}}>
                       {Array.isArray(item.Notification_Message) &&
                       item.Notification_Message.length > 0 ? (
                         <ScrollingNotification
@@ -634,9 +630,9 @@ export default function JodiPannelResultSection() {
                           interval={6000}
                           color={item.notificationColor || "#ff0000"}
                           speed={10}
-                          className="col-4"
                         />
                       ) : null}
+                      </div>
 
                       <input
                         type="range"
@@ -709,7 +705,11 @@ export default function JodiPannelResultSection() {
                       item.status === "Active" ? "btn-success" : "btn-danger"
                     }`}
                     onClick={(e) => {
-                       handleSetActiveInactive(e, item._id, item.status === "Active" ? "InActive" : "Active")
+                      handleSetActiveInactive(
+                        e,
+                        item._id,
+                        item.status === "Active" ? "InActive" : "Active"
+                      );
                       // setModalType("Set Active Inactive");
                       // setShowModal(true);
                     }}
@@ -735,8 +735,9 @@ export default function JodiPannelResultSection() {
               <button
                 onClick={() => handlePageChange(item, "panel")}
                 style={{
-                  height: "30px",
-                  width: "60px",
+                  height: "60px",
+                  width: "30px",
+                  writingMode: "vertical-rl",
                   textAlign: "center",
                   padding: "5px",
                 }}
