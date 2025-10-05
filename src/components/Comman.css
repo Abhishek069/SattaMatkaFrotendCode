@@ -114,9 +114,10 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  border: solid 1px white;
+  border-top: solid 1px white;
   width: 100%;
-  align-items: center;
+  /* height: 20p; */
+  /* align-items: center; */
   /* width: 100%; */
 }
 
@@ -129,7 +130,8 @@
   display: flex;
   flex-direction: row;
   width: 100%;
-  justify-content: space-between;
+  justify-content: center;
+  padding: 0px;
 }
 
 .jodi-panel-continer-second{
@@ -456,4 +458,74 @@
 
 .addGame-Save-button{
   width: 40%;
+}
+.panel-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.matka-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Arial, sans-serif;
+  font-size: 0.8rem;
+}
+
+.matka-table th, .matka-table td {
+  border: 1px solid #ccc;
+  padding: 4px 6px;
+  text-align: center;
+}
+
+.matka-table .title {
+  font-size: 1rem;
+  padding: 6px 0;
+  background-color: #f8f9fa;
+  color: #333;
+}
+
+.data-of-jodi-open-close {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+}
+
+.small-panel p {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.big-jodi {
+  font-size: 1rem;
+  font-weight: bold;
+  min-width: 28px;
+  text-align: center;
+}
+
+.big-jodi.red {
+  color: red;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .matka-table th, .matka-table td {
+    padding: 2px 4px;
+    font-size: 0.7rem;
+  }
+  .week-cell{
+    font-size: 16px;
+    width: 50%;
+  }
+
+  .big-jodi {
+    font-size: 0.85rem;
+    min-width: 24px;
+  }
+
+  .title {
+    font-size: 0.9rem;
+  }
+
 }

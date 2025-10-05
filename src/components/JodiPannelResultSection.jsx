@@ -191,8 +191,6 @@ export default function JodiPannelResultSection() {
   };
 
   const handleSetActiveInactive = async (e, gameId, newStatus) => {
-    console.log(gameId);
-
     e.preventDefault();
     try {
       await api(`/AllGames/updateStatus/${gameId}`, {
@@ -365,8 +363,6 @@ export default function JodiPannelResultSection() {
         toast.error("Error updating notification");
       }
     } else if (editGame.openOrClose === "Set Live Time") {
-      console.log(editGame);
-      
       try {
         const response = await api(`/AllGames/setLiveTime/${editGame.id}`, {
           method: "PUT",
@@ -610,7 +606,7 @@ export default function JodiPannelResultSection() {
 
           return (
             <div
-              className="jodi-panel-container jodi-panel-container-second m-1 p-2"
+              className="jodi-panel-container jodi-panel-container-second p-1"
               key={item._id || index}
               style={{ backgroundColor: item.panelColor || "" }}
             >
@@ -618,11 +614,13 @@ export default function JodiPannelResultSection() {
               <button
                 className="btn btn-sm btn-primary button-jodi-panel"
                 style={{
-                  height: "60px",
+                  height: "125px",
                   width: "30px",
                   writingMode: "vertical-rl",
+                  textOrientation: "upright",
                   textAlign: "center",
                   padding: "5px",
+                  borderRadius:"15px"
                 }}
                 onClick={() => handlePageChange(item)}
               >
@@ -637,27 +635,15 @@ export default function JodiPannelResultSection() {
                         style={{
                           fontSize: `${nameSizes[item._id] || 18}px`,
                           color: item.nameColor || "#000000",
+                          textShadow: "2px 2px 5px rgba(0, 0, 0, 0.3)"
                         }}
                       >
                         {item.name}
                       </h4>
-
-                      <div style={{ maxWidth: "100%", width: "100%" }}>
-                        {Array.isArray(item.Notification_Message) &&
-                        item.Notification_Message.length > 0 ? (
-                          <ScrollingNotification
-                            messages={item.Notification_Message}
-                            interval={6000}
-                            color={item.notificationColor || "#ff0000"}
-                            speed={10}
-                          />
-                        ) : null}
-                      </div>
-
                       <input
                         type="range"
                         min="12"
-                        max="40"
+                        max="27"
                         value={nameSizes[item._id] || 18}
                         onChange={(e) =>
                           setNameSizes({
@@ -682,30 +668,22 @@ export default function JodiPannelResultSection() {
                         style={{
                           fontSize: `${nameSizes[item._id] || 18}px`,
                           color: item.nameColor || "#000000",
+                          textShadow: "2px 2px 5px rgba(0, 0, 0, 0.3)"
                         }}
                       >
                         {item.name}
                       </h4>
-
-                      {Array.isArray(item.Notification_Message) &&
-                      item.Notification_Message.length > 0 ? (
-                        <ScrollingNotification
-                          messages={item.Notification_Message}
-                          interval={3000}
-                          color={item.notificationColor || "#ff0000"}
-                        />
-                      ) : null}
                     </>
                   )}
                 </div>
 
                 {/* ✅ Result or Loading */}
-                <h5 style={{ color: item.resultColor || "#000000" }}>
+                <h5 style={{ color: item.resultColor || "#000000", padding:"0px", textShadow: "2px 2px 5px rgba(0, 0, 0, 0.3)" }}>
                   {displayResult}
                 </h5>
 
                 {/* Action Buttons (Edit / Set Live Time) */}
-                <div className="d-flex justify-content-center mt-3 gap-2">
+                <div className="d-flex justify-content-center mt-0 gap-1">
                   <button
                     className="btn btn-primary btn-sm"
                     onClick={() => handleEditClick(item)}
@@ -719,7 +697,6 @@ export default function JodiPannelResultSection() {
                   >
                     EDIT
                   </button>
-                  {console.log(item)}
                   <button
                     className={`btn m-1 ${
                       item.status === "Active" ? "btn-success" : "btn-danger"
@@ -746,8 +723,25 @@ export default function JodiPannelResultSection() {
 
                 {/* Game timing info */}
                 <div className="timeStamp-for-jodi-panel">
-                  <p>{item.startTime}</p>
-                  <p>{item.endTime}</p>
+                  <p style={{
+                          color: item.nameColor || "#000000",
+                          marginRight:"15px"
+                        }}>{item.startTime}</p>
+                  <p style={{
+                          color: item.nameColor || "#000000",
+                          marginLeft:"15px"
+                        }}>{item.endTime}</p>
+                </div>
+                <div style={{ maxWidth: "100%", width: "100%" }}>
+                  {Array.isArray(item.Notification_Message) &&
+                  item.Notification_Message.length > 0 ? (
+                    <ScrollingNotification
+                      messages={item.Notification_Message}
+                      interval={6000}
+                      color={item.notificationColor || "#ff0000"}
+                      speed={10}
+                    />
+                  ) : null}
                 </div>
               </div>
 
@@ -755,11 +749,13 @@ export default function JodiPannelResultSection() {
               <button
                 onClick={() => handlePageChange(item, "panel")}
                 style={{
-                  height: "60px",
+                  height: "125px",
                   width: "30px",
                   writingMode: "vertical-rl",
+                  textOrientation: "upright",
                   textAlign: "center",
                   padding: "5px",
+                  borderRadius: "15px"
                 }}
                 className="btn btn-sm btn-primary button-jodi-panel"
               >

@@ -1,7 +1,11 @@
 import React from "react";
 import "./Comman.css";
 
-export default function PanelMatkaTable({ groupedData, groupedByDayOpen }) {
+export default function PanelMatkaTable({
+  groupedData,
+  gameName,
+  groupedByDayOpen,
+}) {
   const headers = ["Week", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   const dayMap = {
@@ -19,7 +23,7 @@ export default function PanelMatkaTable({ groupedData, groupedByDayOpen }) {
     ...Object.values(groupedByDayOpen).map((dayArr) => dayArr.length)
   );
 
-  const baseDate = new Date(2019, 3, 22); // month is 0-based → 3 = April
+  const baseDate = new Date(2019, 3, 22);
 
   const formatDate = (date) => {
     const d = date.getDate().toString().padStart(2, "0");
@@ -35,32 +39,32 @@ export default function PanelMatkaTable({ groupedData, groupedByDayOpen }) {
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
 
-    const weekRange = `${formatDate(startOfWeek)}\n to \n${formatDate(
-      endOfWeek
-    )}`;
+    const weekRange = `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
 
     const rowData = Object.values(dayMap).map((shortDay) => {
       const fullDay = Object.keys(dayMap).find(
         (key) => dayMap[key] === shortDay
       );
-      
-      const openData = groupedByDayOpen[fullDay] && groupedByDayOpen[fullDay][rowIndex]
-        ? groupedByDayOpen[fullDay][rowIndex]
-        : ["", "", ""];
-      
-      const closeData = groupedData[fullDay] && groupedData[fullDay][rowIndex]
-        ? groupedData[fullDay][rowIndex]
-        : ["", "", ""];
 
-      // Determine the combined Jodi value
-      const openJodi = openData[1] || '';
-      const closeJodi = closeData[1] || '';
-      const combinedJodi = (openJodi && closeJodi) ? `${openJodi}${closeJodi}` : '';
+      const openData =
+        groupedByDayOpen[fullDay] && groupedByDayOpen[fullDay][rowIndex]
+          ? groupedByDayOpen[fullDay][rowIndex]
+          : ["", "", ""];
+
+      const closeData =
+        groupedData[fullDay] && groupedData[fullDay][rowIndex]
+          ? groupedData[fullDay][rowIndex]
+          : ["", "", ""];
+
+      const openJodi = openData[1] || "";
+      const closeJodi = closeData[1] || "";
+      const combinedJodi =
+        openJodi && closeJodi ? `${openJodi}${closeJodi}` : "";
 
       return {
-        openPanel: openData[0] || '',
+        openPanel: openData,
         jodi: combinedJodi,
-        closePanel: closeData[0] || ''
+        closePanel: closeData,
       };
     });
 
@@ -70,59 +74,91 @@ export default function PanelMatkaTable({ groupedData, groupedByDayOpen }) {
   const redNumbers = ["44", "50", "38", "99", "61", "05", "77", "88", "66"];
 
   return (
-    <div>
+    <div className="panel-table-wrapper">
       <button className="go-bottom">Go to Bottom</button>
-      <table className="matka-table">
-        <thead>
-          <tr>
-            <th colSpan={8} className="title">
-              MILAN MORNING MATKA PANEL RECORD 2019 - 2025
-            </th>
-          </tr>
-          <tr>
-            {headers.map((day) => (
-              <th key={day} className="day">
-                {day}
+      <div className="table-responsive">
+        <table className="matka-table">
+          <thead>
+            <tr>
+              <th colSpan={8} className="title">
+                {gameName} MATKA PANEL RECORD 2019 - 2025
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              <td className="week-cell">
-                {row.weekRange.split("\n").map((line, i) => (
-                  <div key={i}>{line}</div>
-                ))}
-              </td>
-
-              {row.rowData.map(({ openPanel, jodi, closePanel }, colIndex) => (
-                <td key={colIndex} className="cell">
-                  <div className="data-of-jodi-open-close">
-                    <div className="small">
-                      <p>{openPanel[0]}</p>
-                      <p>{openPanel[1]}</p>
-                      <p>{openPanel[2]}</p>
-                    </div>
-                    <div
-                      className={
-                        redNumbers.includes(jodi) ? "big red" : "big"
-                      }
-                    >
-                      <h1>{jodi}</h1>
-                    </div>
-                    <div className="small">
-                      <p>{closePanel[0]}</p>
-                      <p>{closePanel[1]}</p>
-                      <p>{closePanel[2]}</p>
-                    </div>
-                  </div>
-                </td>
+            </tr>
+            <tr>
+              {headers.map((day) => (
+                <th key={day} className="day">
+                  {day}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                <td className="week-cell">{row.weekRange}</td>
+
+                {row.rowData.map(
+                  ({ openPanel, jodi, closePanel }, colIndex) => (
+                    <td key={colIndex} className="cell">
+                      {console.log(openPanel,closePanel )                      }
+                      {/* ✅ Show only if both open & close have first value */}
+                      {openPanel &&
+                      closePanel &&
+                      openPanel[0] &&
+                      closePanel[0] ? (
+                        <div className="data-of-jodi-open-close">
+                          {/* Open Panel Vertical */}
+                          <div
+                            className="small-panel"
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                            }}
+                          >
+                            {openPanel[0].split("").map((digit, i) => (
+                              <span key={i}>{digit}</span>
+                            ))}
+                          </div>
+
+                          {/* Combined Jodi */}
+                          <div
+                            className={`big-jodi ${
+                              redNumbers.includes(jodi) ? "red" : ""
+                            }`}
+                          >
+                            {jodi || "-"}
+                          </div>
+
+                          {/* Close Panel */}
+                          <div
+                            className="small-panel"
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                            }}
+                          >
+                            {closePanel[0].split("").map((digit, i) => (
+                              <span key={i}>{digit}</span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          style={{ textAlign: "center", color: "#ccc" }}
+                        >
+                          -
+                        </div>
+                      )}
+                    </td>
+                  )
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

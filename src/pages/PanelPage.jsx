@@ -109,7 +109,7 @@ const PanelPage = () => {
         </h3>
       </div>
       {/* Pass the grouped data to the MatkaTable component */}
-      <PanelMatkaTable groupedData={groupedByDay}  groupedByDayOpen={groupedByDayOpen}/>
+      <PanelMatkaTable groupedData={groupedByDay} gameName={singleGameData.name}  groupedByDayOpen={groupedByDayOpen}/>
       <div
         className="border m-1 border-danger text-center py-2"
         style={{ "background-color": "Pink" }}

@@ -12,6 +12,7 @@ import StarlStarlineSectionineTable from '../components/StarlineSection'
 import MainBombay36Bazar from '../components/MainBombay36Bazar'
 import DpBossPage from '../components/DpBossPage'
 import UserPayments from '../components/AgentList'
+import NotificationPage from '../components/NoticationPage'
 
 const HomePage = (props) => {
 
@@ -24,6 +25,7 @@ const HomePage = (props) => {
     <div className="border m-1 border-danger text-center py-2 col-10" style={{ backgroundColor: "#ff2600ff", width:"98%" }}>
       <Header />
       <WelcomeBanner />
+      <NotificationPage/>
       <InfoSection />
       {
         role==="Admin" ?
