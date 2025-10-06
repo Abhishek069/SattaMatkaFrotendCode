@@ -22,10 +22,13 @@ const HomePage = (props) => {
   
 
   return (
-    <div className="border m-1 border-danger text-center py-2 col-10" style={{ backgroundColor: "#ff2600ff", width:"98%" }}>
+    <div className="border m-1 border-danger text-center py-2 col-12" style={{ backgroundColor: "#ff2600ff", width:"98%" }}>
       <Header />
       <WelcomeBanner />
-      <NotificationPage/>
+      {
+        role==="Admin" ?
+        <NotificationPage/>:""
+      }
       <InfoSection />
       {
         role==="Admin" ?
