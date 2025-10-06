@@ -656,7 +656,7 @@ export default function JodiPannelResultSection() {
                         {nameSizes[item._id] || 18}px
                       </span>
                       <button
-                        className="btn btn-success btn-sm ml-2"
+                        className="btn btn-success btn-sm "
                         onClick={() => handleSaveFontSize(item._id)}
                       >
                         Save
@@ -678,7 +678,7 @@ export default function JodiPannelResultSection() {
                 </div>
 
                 {/* ✅ Result or Loading */}
-                <h5 style={{ color: item.resultColor || "#000000", padding:"0px", textShadow: "2px 2px 5px rgba(0, 0, 0, 0.3)" }}>
+                <h5 style={{ color: item.resultColor || "#000000", padding:"0px", textShadow: "2px 2px 5px rgba(0, 0, 0, 0.3)", fontSize:"28px" }}>
                   {displayResult}
                 </h5>
 

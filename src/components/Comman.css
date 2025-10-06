@@ -109,15 +109,18 @@
   font-size: 20px;
   color: rgb(14, 121, 5);
 }
-
+.jodi-panel-container-second{
+  width: 100%;
+}
 .jodi-panel-container{
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   border-top: solid 1px white;
   width: 100%;
+  margin-right: 45px;
   /* height: 20p; */
-  /* align-items: center; */
+  align-items: center;
   /* width: 100%; */
 }
 
