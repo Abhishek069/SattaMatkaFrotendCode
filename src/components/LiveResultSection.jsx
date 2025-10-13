@@ -30,8 +30,12 @@ const LiveResultSection = () => {
               );
             }
 
+
             // ✅ If no startTime or still before 10min window → Loading
-            if (startTime >= now <= new Date(startTime.getTime() - 10 * 60 * 1000)) {
+            console.log(startTime >= now )
+            console.log(startTime , now )
+
+            if (startTime >= now) {
               return { title: game.name, numbers: "Loading..." };
             }
 

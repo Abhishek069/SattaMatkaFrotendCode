@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { Await, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
@@ -8,40 +8,58 @@ import "react-toastify/dist/ReactToastify.css";
 
 // 🔹 Small component for blinking notification messages
 // 🔹 Small component for scrolling notification messages
+// import { useEffect, , useState } from "react";
+
 const ScrollingNotification = ({
   messages,
   color = "#ff0000",
-  speed = 10, // seconds for one full scroll
+  baseSpeed = 20, // seconds per 1000px
 }) => {
+  const containerRef = useRef(null);
+  const contentRef = useRef(null);
+  const [animationDuration, setAnimationDuration] = useState(baseSpeed);
+
   if (!messages || messages.length === 0) return null;
 
-  const text = messages.join(" • "); // join into one long string
+  const text = messages.join(" • ");
+
+  useEffect(() => {
+    const containerWidth = containerRef.current?.offsetWidth || 0;
+    const contentWidth = contentRef.current?.scrollWidth || 0;
+
+    // Make duration proportional to content length
+    const distance = contentWidth + containerWidth;
+    const duration = (distance / 1000) * baseSpeed; // baseSpeed = seconds per 1000px
+    setAnimationDuration(duration);
+  }, [text, baseSpeed]);
 
   return (
     <div
+      ref={containerRef}
       style={{
         overflow: "hidden",
         whiteSpace: "nowrap",
         width: "100%",
-        maxWidth: "100%",
         position: "relative",
       }}
     >
       <div
+        ref={contentRef}
         style={{
           display: "inline-block",
           color,
-          animation: `scroll ${speed}s linear infinite`,
+          paddingLeft: "100%",
+          animation: `scroll ${animationDuration}s linear infinite`,
         }}
       >
         <span style={{ paddingRight: "2rem" }}>{text}</span>
-        <span>{text}</span> {/* duplicate for seamless loop */}
+        <span style={{ paddingRight: "2rem" }}>{text}</span>
       </div>
 
       <style>{`
         @keyframes scroll {
           0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+          100% { transform: translateX(-100%); }
         }
       `}</style>
     </div>
@@ -99,6 +117,8 @@ export default function JodiPannelResultSection() {
   const [deleteGameName, setDeleteGameName] = useState("");
   const [linkForUpdateGame, setLinkForUpdateGame] = useState("");
   const [selectedStatus, setSelectedStatus] = useState();
+  const nowDateAndTime = new Date().toISOString();
+  // console.log(nowDateAndTime);
 
   // 🔹 Handlers
   // const handleFormChange = (e) => {
@@ -278,6 +298,23 @@ export default function JodiPannelResultSection() {
   if (loading) return <div>Loading games...</div>;
   if (error) return <div>Error: {error}</div>;
 
+  // const filteredAndSortedGames = games
+  //   .filter((item) => {
+  //     if (!item.startTime) return false; // skip if no startTime
+  //     const startDate = getStartTimeAsDate(item.startTime);
+  //     return startDate >= new Date(); // only future or ongoing
+  //   })
+  //   .sort((a, b) => {
+  //     const startA = getStartTimeAsDate(a.startTime);
+  //     const startB = getStartTimeAsDate(b.startTime);
+  //     return startA - startB; // ascending: closest time first
+  //   });
+  const sortedGames = [...games].sort((a, b) => {
+    const diffA = Math.abs(getStartTimeAsDate(a.startTime) - new Date());
+    const diffB = Math.abs(getStartTimeAsDate(b.startTime) - new Date());
+    return diffA - diffB; // closest to now first
+  });
+
   const handleSaveFontSize = async (gameId) => {
     try {
       const response = await api(`/AllGames/saveFontSize/${gameId}`, {
@@ -453,6 +490,27 @@ export default function JodiPannelResultSection() {
     }
   };
 
+  function getStartTimeAsDate(startTimeStr) {
+    const now = new Date();
+    const [hours, minutes] = startTimeStr.split(":").map(Number);
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      hours,
+      minutes,
+      0
+    );
+  }
+
+  function isOlderThan12Hours(dateString) {
+    const updated = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - updated; // difference in milliseconds
+    const hours = diffMs / (1000 * 60 * 60); // convert to hours
+    return hours >= 13;
+  }
+
   const getDisplayResult = (item) => {
     const lastOpen =
       Array.isArray(item.openNo) && item.openNo.length > 0
@@ -475,7 +533,7 @@ export default function JodiPannelResultSection() {
     const closeTime = lastClose?.[2] || "";
     const closeDay = lastClose?.[4] || "";
 
-    if (lastOpen && lastClose && openDay === closeDay) {
+    if (lastOpen && lastClose && openDay === closeDay && lastOpen[2].split('T')[0] === lastClose[2].split('T')[0]) {
       return `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
     }
 
@@ -547,7 +605,7 @@ export default function JodiPannelResultSection() {
         </div>
       )}
 
-      {games
+      {sortedGames
         // Filter logic: Admin sees all, User/Agent only see active
         .filter((item) => {
           if (role === "Admin") return true;
@@ -555,6 +613,8 @@ export default function JodiPannelResultSection() {
         })
         .map((item, index) => {
           // ✅ Function to decide whether to show Loading or actual result
+          console.log(item);
+
           const getDisplayResultOrLoading = (item) => {
             const now = new Date();
 
@@ -620,7 +680,7 @@ export default function JodiPannelResultSection() {
                   textOrientation: "upright",
                   textAlign: "center",
                   padding: "5px",
-                  borderRadius:"15px"
+                  borderRadius: "15px",
                 }}
                 onClick={() => handlePageChange(item)}
               >
@@ -635,7 +695,7 @@ export default function JodiPannelResultSection() {
                         style={{
                           fontSize: `${nameSizes[item._id] || 18}px`,
                           color: item.nameColor || "#000000",
-                          textShadow: "2px 2px 5px rgba(0, 0, 0, 0.3)"
+                          textShadow: "2px 2px 5px rgba(0, 0, 0, 0.3)",
                         }}
                       >
                         {item.name}
@@ -668,7 +728,7 @@ export default function JodiPannelResultSection() {
                         style={{
                           fontSize: `${nameSizes[item._id] || 18}px`,
                           color: item.nameColor || "#000000",
-                          textShadow: "2px 2px 5px rgba(0, 0, 0, 0.3)"
+                          textShadow: "2px 2px 5px rgba(0, 0, 0, 0.3)",
                         }}
                       >
                         {item.name}
@@ -678,10 +738,16 @@ export default function JodiPannelResultSection() {
                 </div>
 
                 {/* ✅ Result or Loading */}
-                <h5 style={{ color: item.resultColor || "#000000", padding:"0px", textShadow: "2px 2px 5px rgba(0, 0, 0, 0.3)", fontSize:"28px" }}>
-                  {displayResult}
+                <h5
+                  style={{
+                    color: item.resultColor || "#000000",
+                    padding: "0px",
+                    textShadow: "2px 2px 5px rgba(0, 0, 0, 0.3)",
+                    fontSize: "28px",
+                  }}
+                >
+                  {isOlderThan12Hours(item.updatedAt) ? "****" : displayResult}
                 </h5>
-
                 {/* Action Buttons (Edit / Set Live Time) */}
                 <div className="d-flex justify-content-center mt-0 gap-1">
                   <button
@@ -723,14 +789,22 @@ export default function JodiPannelResultSection() {
 
                 {/* Game timing info */}
                 <div className="timeStamp-for-jodi-panel">
-                  <p style={{
-                          color: item.nameColor || "#000000",
-                          marginRight:"15px"
-                        }}>{item.startTime}</p>
-                  <p style={{
-                          color: item.nameColor || "#000000",
-                          marginLeft:"15px"
-                        }}>{item.endTime}</p>
+                  <p
+                    style={{
+                      color: item.nameColor || "#000000",
+                      marginRight: "15px",
+                    }}
+                  >
+                    {item.startTime}
+                  </p>
+                  <p
+                    style={{
+                      color: item.nameColor || "#000000",
+                      marginLeft: "15px",
+                    }}
+                  >
+                    {item.endTime}
+                  </p>
                 </div>
                 <div style={{ maxWidth: "100%", width: "100%" }}>
                   {Array.isArray(item.Notification_Message) &&
@@ -755,7 +829,7 @@ export default function JodiPannelResultSection() {
                   textOrientation: "upright",
                   textAlign: "center",
                   padding: "5px",
-                  borderRadius: "15px"
+                  borderRadius: "15px",
                 }}
                 className="btn btn-sm btn-primary button-jodi-panel"
               >
