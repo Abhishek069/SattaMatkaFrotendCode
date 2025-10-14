@@ -508,7 +508,7 @@ export default function JodiPannelResultSection() {
     const now = new Date();
     const diffMs = now - updated; // difference in milliseconds
     const hours = diffMs / (1000 * 60 * 60); // convert to hours
-    return hours >= 13;
+    return hours >= 24;
   }
 
   const getDisplayResult = (item) => {

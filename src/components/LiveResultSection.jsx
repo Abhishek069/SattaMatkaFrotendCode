@@ -7,6 +7,14 @@ const LiveResultSection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
+  function isOlderThan12Hours(dateString) {
+    const updated = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - updated; // difference in milliseconds
+    const hours = diffMs / (1000 * 60 * 60); // convert to hours
+    return hours >= 24;
+  }
   useEffect(() => {
     const fetchResults = async () => {
       try {
@@ -47,7 +55,7 @@ const LiveResultSection = () => {
               : null;
 
             if (!lastOpen && !lastClose) {
-              return { title: game.name, numbers: "N/A" };
+              return { title: game.name, numbers: "***_**_***" };
             }
 
             const openMain = lastOpen?.[0] || "";
@@ -60,9 +68,9 @@ const LiveResultSection = () => {
             const closeTime = lastClose?.[2] || "";
             const closeDay = lastClose?.[4] || "";
 
-            let lastResult = "N/A";
+            let lastResult = "***-**_***";
 
-            if (lastOpen && lastClose && openDay === closeDay) {
+            if (lastOpen && lastClose && openDay === closeDay && lastOpen[2].split('T')[0] === lastClose[2].split('T')[0]) {
               lastResult = `${openMain}-${openDigit}${closeDigit}-${closeMain}`;
             } else if (
               lastOpen &&
@@ -127,7 +135,7 @@ const LiveResultSection = () => {
         ) : results.length > 0 ? (
           results.map((item, idx) => (
             <div className="col-md-4" key={idx}>
-              <LiveResultItem title={item.title} numbers={item.numbers} />
+              <LiveResultItem title={item.title} numbers={isOlderThan12Hours(item.updatedAt) ? "***_**_***": item.numbers} />
             </div>
           ))
         ) : (
