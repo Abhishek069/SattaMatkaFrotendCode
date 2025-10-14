@@ -17,6 +17,16 @@ import NotificationPage from "../components/NoticationPage";
 import { api } from "../lib/api";
 
 // --- New Component for Static Buttons ---
+
+const handleRefresh = () => {
+    // Refresh the current page
+    window.location.reload();
+  };
+
+  const handleCall = () => {
+    // Opens dialer with number
+    window.location.href = "tel:+911234567890"; // ← replace with your number
+  };
 const StaticButtons = () => {
   // Use a React Portal to render the buttons outside the normal DOM hierarchy.
   return ReactDOM.createPortal(
@@ -25,54 +35,45 @@ const StaticButtons = () => {
         position: "fixed",
         bottom: "20px",
         right: "20px",
-        zIndex: 1000, // Ensure buttons are above other content
+        zIndex: 1000,
         display: "flex",
         flexDirection: "column",
         gap: "10px",
       }}
     >
+      {/* 📞 Dial Pad Button */}
       <button
-        onClick={() => console.log("Admin Button 1 clicked")}
+        onClick={handleCall}
         style={{
-          padding: "5px 10px",
+          padding: "10px 20px",
           backgroundColor: "#4CAF50",
           color: "white",
           border: "none",
           borderRadius: "5px",
           cursor: "pointer",
           boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+          fontSize: "16px",
         }}
       >
-        Admin Action 1
+        📞 Call Admin
       </button>
+
+      {/* 🔄 Refresh Page Button */}
       <button
-        onClick={() => console.log("Admin Button 2 clicked")}
+        onClick={handleRefresh}
         style={{
-          padding: "5px 10px",
+          padding: "10px 20px",
           backgroundColor: "#008CBA",
           color: "white",
           border: "none",
           borderRadius: "5px",
           cursor: "pointer",
           boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
+          fontSize: "16px",
         }}
       >
-        Admin Action 2
+        🔄 Refresh Page
       </button>
-      {/* <button
-        onClick={() => console.log("Admin Button 3 clicked")}
-        style={{
-          padding: "10px 20px",
-          backgroundColor: "#f44336",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-          boxShadow: "0 2px 5px rgba(0,0,0,0.3)",
-        }}
-      >
-        Admin Action 3
-      </button> */}
     </div>,
     document.body
   );
@@ -83,6 +84,7 @@ const HomePage = ({ setGameTitle }) => {
   const [responseNotification, setResponseNotification] = useState([]);
   const role = localStorage.getItem("userRole"); // This variable is used for the check
 
+  
   // --- Fetch Notifications (Logic remains the same) ---
   const handleGetNotification = async () => {
     const API_URL = "/Notification/update-noti";
@@ -133,7 +135,7 @@ const HomePage = ({ setGameTitle }) => {
   return (
     <>
       {/* 🛑 CONDITIONAL RENDERING FOR ADMIN BUTTONS */}
-      {role === "Admin" && <StaticButtons />}
+       <StaticButtons />
 
       {/* Existing Page Content */}
       <div
@@ -161,7 +163,7 @@ const HomePage = ({ setGameTitle }) => {
         {/* This existing check is redundant if you're using role === "Admin" above, but maintained here */}
         {role === "Admin" && <UserPayments />}
 
-        <LuckyNumberSection />
+        {/* <LuckyNumberSection /> */}
         <LiveResultSection />
         <NoticeSection />
         <MatkaDivisionName />
