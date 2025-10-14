@@ -613,7 +613,6 @@ export default function JodiPannelResultSection() {
         })
         .map((item, index) => {
           // ✅ Function to decide whether to show Loading or actual result
-          console.log(item);
 
           const getDisplayResultOrLoading = (item) => {
             const now = new Date();

@@ -1,9 +1,8 @@
 import React from "react";
 import "./Comman.css";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 
 const DpBossPage = () => {
-  const navigate = useNavigate()
 
   return (
     <div className="dpboss-page" style={{ backgroundColor: "#ffcc99" }}>

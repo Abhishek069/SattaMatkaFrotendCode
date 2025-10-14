@@ -66,7 +66,7 @@ const AddNotificationModal = ({ onClose, onSave }) => {
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -213,7 +213,7 @@ const AddNotificationModal = ({ onClose, onSave }) => {
 // --- Main Notification Page ---
 function NotificationPage({ role, notificationMessage }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  console.log(notificationMessage);
+  // console.log(notificationMessage);
 
   const [scrollMessages, setScrollMessages] = useState(
     notificationMessage?.name || "Welcome! Click below to add a notification."

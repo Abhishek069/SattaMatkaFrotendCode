@@ -100,7 +100,7 @@ export default function PanelMatkaTable({
                 {row.rowData.map(
                   ({ openPanel, jodi, closePanel }, colIndex) => (
                     <td key={colIndex} className="cell">
-                      {console.log(openPanel,closePanel )                      }
+                      {/* {console.log(openPanel,closePanel )                      } */}
                       {/* ✅ Show only if both open & close have first value */}
                       {openPanel &&
                       closePanel &&

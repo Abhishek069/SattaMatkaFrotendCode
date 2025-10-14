@@ -14,6 +14,7 @@ import MainBombay36Bazar from "../components/MainBombay36Bazar";
 import DpBossPage from "../components/DpBossPage";
 import UserPayments from "../components/AgentList";
 import NotificationPage from "../components/NoticationPage";
+import AllPageLink from '../components/allLinkPage'
 import { api } from "../lib/api";
 
 // --- New Component for Static Buttons ---
@@ -110,7 +111,7 @@ const HomePage = ({ setGameTitle }) => {
         return;
       }
       setResponseNotification(notificationsArray);
-      console.log("✅ Notifications fetched:", notificationsArray);
+      // console.log("✅ Notifications fetched:", notificationsArray);
     } catch (error) {
       console.error("❌ Error retrieving notification:", error);
     }
@@ -174,6 +175,7 @@ const HomePage = ({ setGameTitle }) => {
         />
         <StarlStarlineSectionineTable />
         <MainBombay36Bazar />
+        <AllPageLink/>
         <DpBossPage />
         <NotificationPage
           role={role}
