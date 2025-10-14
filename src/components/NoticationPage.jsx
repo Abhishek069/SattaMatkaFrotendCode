@@ -2,7 +2,11 @@ import React, { useEffect, useState, useRef } from "react";
 import { api } from "../lib/api";
 
 // --- Scrolling Notification Component ---
-const ScrollingNotification = ({ messages, color = "#fc0505ff", baseSpeed = 20 }) => {
+const ScrollingNotification = ({
+  messages,
+  color = "#fc0505ff",
+  baseSpeed = 20,
+}) => {
   const containerRef = useRef(null);
   const contentRef = useRef(null);
   const [animationDuration, setAnimationDuration] = useState(baseSpeed);
@@ -60,11 +64,14 @@ const AddNotificationModal = ({ onClose, onSave }) => {
   const [error, setError] = useState(null);
   const INDEX_OPTIONS = ["1", "2", "3", "4"];
 
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.index) return setError("All fields are required.");
+    if (!formData.name || !formData.index)
+      return setError("All fields are required.");
     setIsSaving(true);
     setError(null);
     try {
@@ -113,13 +120,25 @@ const AddNotificationModal = ({ onClose, onSave }) => {
           boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
         }}
       >
-        <h3 style={{ marginTop: 0, borderBottom: "1px solid #eee", paddingBottom: "10px" }}>
+        <h3
+          style={{
+            marginTop: 0,
+            borderBottom: "1px solid #eee",
+            paddingBottom: "10px",
+          }}
+        >
           Add Notification
         </h3>
         {error && <p style={{ color: "red" }}>{error}</p>}
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: "15px" }}>
-            <label style={{ fontWeight: "bold", marginBottom: "5px", display: "block" }}>
+            <label
+              style={{
+                fontWeight: "bold",
+                marginBottom: "5px",
+                display: "block",
+              }}
+            >
               Notification Message:
             </label>
             <input
@@ -139,7 +158,13 @@ const AddNotificationModal = ({ onClose, onSave }) => {
             />
           </div>
 
-          <label style={{ fontWeight: "bold", display: "block", marginBottom: "5px" }}>
+          <label
+            style={{
+              fontWeight: "bold",
+              display: "block",
+              marginBottom: "5px",
+            }}
+          >
             Section Index:
           </label>
           <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
@@ -158,7 +183,9 @@ const AddNotificationModal = ({ onClose, onSave }) => {
             ))}
           </div>
 
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+          <div
+            style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}
+          >
             <button type="button" onClick={onClose} disabled={isSaving}>
               Cancel
             </button>
@@ -186,6 +213,8 @@ const AddNotificationModal = ({ onClose, onSave }) => {
 // --- Main Notification Page ---
 function NotificationPage({ role, notificationMessage }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  console.log(notificationMessage);
+
   const [scrollMessages, setScrollMessages] = useState(
     notificationMessage?.name || "Welcome! Click below to add a notification."
   );
@@ -204,6 +233,12 @@ function NotificationPage({ role, notificationMessage }) {
       console.error("Error saving notification:", error);
     }
   };
+
+  useEffect(() => {
+  if (notificationMessage?.name) {
+    setScrollMessages(notificationMessage.name);
+  }
+}, [notificationMessage]);
 
   // const handleGetNotification = async () => {
   //   const API_URL = "/Notification/update-noti";
@@ -229,7 +264,11 @@ function NotificationPage({ role, notificationMessage }) {
 
   return (
     <div style={{ minHeight: "10vh", backgroundColor: "#ffcc99" }}>
-      <ScrollingNotification messages={scrollMessages} color="#f70019ff" speed={15} />
+      <ScrollingNotification
+        messages={scrollMessages}
+        color="#f70019ff"
+        speed={15}
+      />
 
       {role === "Admin" && (
         <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>

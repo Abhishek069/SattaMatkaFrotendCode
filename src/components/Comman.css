@@ -117,11 +117,11 @@
   flex-direction: row;
   justify-content: space-between;
   border-top: solid 1px white;
-  width: 100%;
-  margin-right: 45px;
-  /* height: 20p; */
+  /* Change this to 100% */
+  width: 100%; 
+  /* Remove or comment out the conflicting margin */
+  /* margin-right: 45px; */ 
   align-items: center;
-  /* width: 100%; */
 }
 
 .button-jodi-panel{
@@ -179,7 +179,7 @@
   font-size: 15px;
 }
 .home-page-main-container{
-  width: 98%;
+  width: 100%;
 }
 
 .data-block h3 {
