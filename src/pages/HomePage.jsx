@@ -26,7 +26,7 @@ const handleRefresh = () => {
 
   const handleCall = () => {
     // Opens dialer with number
-    window.location.href = "tel:+911234567890"; // ← replace with your number
+    window.location.href = "tel:+919691443421"; // ← replace with your number
   };
 const StaticButtons = () => {
   // Use a React Portal to render the buttons outside the normal DOM hierarchy.
