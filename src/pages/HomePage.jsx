@@ -27,14 +27,14 @@ const StaticButtons = () => {
         right: "20px",
         zIndex: 1000, // Ensure buttons are above other content
         display: "flex",
-        flexDirection: "row",
+        flexDirection: "column",
         gap: "10px",
       }}
     >
       <button
         onClick={() => console.log("Admin Button 1 clicked")}
         style={{
-          padding: "10px 20px",
+          padding: "5px 10px",
           backgroundColor: "#4CAF50",
           color: "white",
           border: "none",
@@ -48,7 +48,7 @@ const StaticButtons = () => {
       <button
         onClick={() => console.log("Admin Button 2 clicked")}
         style={{
-          padding: "10px 20px",
+          padding: "5px 10px",
           backgroundColor: "#008CBA",
           color: "white",
           border: "none",
@@ -59,7 +59,7 @@ const StaticButtons = () => {
       >
         Admin Action 2
       </button>
-      <button
+      {/* <button
         onClick={() => console.log("Admin Button 3 clicked")}
         style={{
           padding: "10px 20px",
@@ -72,7 +72,7 @@ const StaticButtons = () => {
         }}
       >
         Admin Action 3
-      </button>
+      </button> */}
     </div>,
     document.body
   );
@@ -95,7 +95,7 @@ const HomePage = ({ setGameTitle }) => {
 
       let notificationsArray = [];
       if (Array.isArray(apiResponse)) {
-        notificationsArray = apiResponse;
+        notificationsArray = await apiResponse;
       } else if (typeof apiResponse === "object") {
         notificationsArray = Object.values(apiResponse).filter(
           (item) => item && typeof item === "object" && item.name
@@ -134,7 +134,7 @@ const HomePage = ({ setGameTitle }) => {
     <>
       {/* 🛑 CONDITIONAL RENDERING FOR ADMIN BUTTONS */}
       {role === "Admin" && <StaticButtons />}
-      
+
       {/* Existing Page Content */}
       <div
         className="border m-1 border-danger text-center py-2 col-12"
@@ -145,10 +145,12 @@ const HomePage = ({ setGameTitle }) => {
         <WelcomeBanner />
 
         {/* Pass the first notification object safely */}
-        <NotificationPage
-          role={role}
-          notificationMessage={responseNotification?.[0] || {}}
-        />
+        {responseNotification.length > 0 && (
+          <NotificationPage
+            role={role}
+            notificationMessage={responseNotification[0]}
+          />
+        )}
 
         <InfoSection />
         <NotificationPage
@@ -166,14 +168,14 @@ const HomePage = ({ setGameTitle }) => {
         <JodiPannelResultSection setGameTitle={setGameTitle} />
         <NotificationPage
           role={role}
-          notificationMessage={responseNotification?.[0] || {}}
+          notificationMessage={responseNotification?.[2] || {}}
         />
         <StarlStarlineSectionineTable />
         <MainBombay36Bazar />
         <DpBossPage />
         <NotificationPage
           role={role}
-          notificationMessage={responseNotification?.[0] || {}}
+          notificationMessage={responseNotification?.[3] || {}}
         />
       </div>
     </>
